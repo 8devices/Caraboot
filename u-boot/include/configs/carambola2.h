@@ -264,6 +264,9 @@
 #define CFG_USB_RECOVERY_FW_START_IN_FLASH 	"0x9f050000"
 #define CFG_USB_BOOT_BUTTON_ID			0
 
+#define CONFIG_AUTOBOOT_KEYED
+#define CONFIG_AUTOBOOT_PROMPT 			"Hit '%s' key(s) to stop autoboot: %2d "
+#define CONFIG_AUTOBOOT_STOP_STR 		"\x1B"
 
 /*
 ** Parameters defining the location of the calibration/initialization

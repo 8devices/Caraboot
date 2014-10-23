@@ -87,12 +87,73 @@ extern void mdm_init(void); /* defined in board.c */
  * returns: 0 -  no key string, allow autoboot
  *          1 - got key string, abort
  */
+
+
+/* Parse boot-stop string and change non-printable chars to human
+ * readable form
+ */
+void parse_autoboot_for_print (char *in, char *out)
+{
+	char *inptr, *outptr;
+
+	int in_len = strlen(in);
+	if (in_len > 20)
+		in_len = 20;
+
+	memset(out, 0, 101);
+	outptr = out;
+
+	for (inptr = in; inptr - in < in_len; inptr++){
+		if (*inptr == 0x1B){
+			memcpy(outptr, "<ESC>", 5);
+			outptr += 5;
+		}
+		else if (*inptr < 32){
+			sprintf(outptr, "^%c", (*inptr)+64);
+			outptr += 2;
+		}
+		else if (*inptr < 127){
+			*outptr++ = *inptr;
+		}
+		else{
+			sprintf(outptr, "\\x%02x", *inptr);
+			outptr += 4;
+		}
+	}
+}
+
+/* Parse environment string and change escape sequences like '\x03' to actual
+ * bytes they represent
+ */
+void parse_autoboot_env (char *in, char *out)
+{
+	char *inptr, *outptr;
+	char tmp[5];
+	int in_len = strlen (in);
+
+	memset(out, 0, 41);
+	outptr = out;
+	if (in_len > 40)
+		in_len = 40;
+
+	for (inptr = in; inptr - in < in_len; inptr++){
+		if (strncmp(inptr, "\\x",2) == 0){
+			memset(tmp, 0, 5);
+			memcpy(tmp, inptr, 4);
+			*outptr = simple_strtoul(tmp+2, NULL, 16);
+			inptr+=3;
+			outptr++;
+		}
+		else
+			*outptr++ = *inptr;
+	}
+}
+
 #if defined(CONFIG_BOOTDELAY) && (CONFIG_BOOTDELAY >= 0)
 # if defined(CONFIG_AUTOBOOT_KEYED)
 static __inline__ int abortboot(int bootdelay)
 {
 	int abort = 0;
-	uint64_t etime = endtick(bootdelay);
 	struct
 	{
 		char* str;
@@ -120,10 +181,6 @@ static __inline__ int abortboot(int bootdelay)
 	}
 #endif
 
-#  ifdef CONFIG_AUTOBOOT_PROMPT
-	printf (CONFIG_AUTOBOOT_PROMPT, bootdelay);
-#  endif
-
 #  ifdef CONFIG_AUTOBOOT_DELAY_STR
 	if (delaykey[0].str == NULL)
 		delaykey[0].str = CONFIG_AUTOBOOT_DELAY_STR;
@@ -135,10 +192,22 @@ static __inline__ int abortboot(int bootdelay)
 #  ifdef CONFIG_AUTOBOOT_STOP_STR
 	if (delaykey[2].str == NULL)
 		delaykey[2].str = CONFIG_AUTOBOOT_STOP_STR;
+
+	char parsed_bootstop_str[41];
+	char printable_bootstop_str[101];
+
+	parse_autoboot_env(delaykey[2].str, parsed_bootstop_str);
+	delaykey[2].str = parsed_bootstop_str;
+
+	parse_autoboot_for_print(delaykey[2].str, printable_bootstop_str);
 #  endif
 #  ifdef CONFIG_AUTOBOOT_STOP_STR2
 	if (delaykey[3].str == NULL)
 		delaykey[3].str = CONFIG_AUTOBOOT_STOP_STR2;
+#  endif
+
+#  ifdef CONFIG_AUTOBOOT_PROMPT
+	printf (CONFIG_AUTOBOOT_PROMPT, printable_bootstop_str, bootdelay);
 #  endif
 
 	for (i = 0; i < sizeof(delaykey) / sizeof(delaykey[0]); i ++) {
@@ -160,39 +229,49 @@ static __inline__ int abortboot(int bootdelay)
 	/* In order to keep up with incoming data, check timeout only
 	 * when catch up.
 	 */
-	while (!abort && get_ticks() <= etime) {
-		for (i = 0; i < sizeof(delaykey) / sizeof(delaykey[0]); i ++) {
-			if (delaykey[i].len > 0 &&
-			    presskey_len >= delaykey[i].len &&
-			    memcmp (presskey + presskey_len - delaykey[i].len,
-				    delaykey[i].str,
-				    delaykey[i].len) == 0) {
+	while (!abort && (bootdelay > 0)) {
+		int j;
+		--bootdelay;
+
+		for (j=0; !abort && j<100; ++j) {
+			for (i = 0; i < sizeof(delaykey) / sizeof(delaykey[0]); i ++) {
+				if (delaykey[i].len > 0 &&
+				presskey_len >= delaykey[i].len &&
+				memcmp (presskey + presskey_len - delaykey[i].len,
+					delaykey[i].str,
+					delaykey[i].len) == 0) {
 #  if DEBUG_BOOTKEYS
-				printf("got %skey\n",
-				       delaykey[i].retry ? "delay" : "stop");
+					printf("got %skey\n",
+						delaykey[i].retry ? "delay" : "stop");
 #  endif
 
 #  ifdef CONFIG_BOOT_RETRY_TIME
-				/* don't retry auto boot */
-				if (! delaykey[i].retry)
-					retry_time = -1;
+					/* don't retry auto boot */
+					if (! delaykey[i].retry)
+						retry_time = -1;
 #  endif
-				abort = 1;
+					abort = 1;
+				}
 			}
-		}
 
-		if (tstc()) {
-			if (presskey_len < presskey_max) {
-				presskey [presskey_len ++] = getc();
-			}
-			else {
-				for (i = 0; i < presskey_max - 1; i ++)
-					presskey [i] = presskey [i + 1];
+			if (tstc()) {
+				if (presskey_len < presskey_max) {
+					presskey [presskey_len ++] = getc();
+				}
+				else {
+					for (i = 0; i < presskey_max - 1; i ++)
+						presskey [i] = presskey [i + 1];
 
-				presskey [i] = getc();
+					presskey [i] = getc();
+				}
 			}
+			udelay (10000);
 		}
+		printf ("\b\b\b%2d ", bootdelay);
 	}
+
+	putc ('\n');
+
 #  if DEBUG_BOOTKEYS
 	if (!abort)
 		puts ("key timeout\n");
