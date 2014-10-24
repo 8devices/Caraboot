@@ -5,7 +5,8 @@ LIB	= lib$(SOC).a
 START	=
 
 OBJS	=  meminit.o
-OBJS	+= hornet_serial.o
+OBJS	+= ar933x_clocks.o 
+OBJS	+= ar933x_serial.o
 SOBJS	+= hornet_ddr_init.o
 OBJS    += ag7240.o
 

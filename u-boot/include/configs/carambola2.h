@@ -268,6 +268,10 @@
 #define CONFIG_AUTOBOOT_PROMPT 			"Hit '%s' key(s) to stop autoboot: %2d "
 #define CONFIG_AUTOBOOT_STOP_STR 		"\x1B"
 
+#undef CFG_BAUDRATE_TABLE
+#define CFG_BAUDRATE_TABLE { 300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 56000, 57600, \
+			115200, 128000, 230400, 250000, 256000, 460800, 576000, 921600, \
+			1000000, 1152000, 1500000, 2000000, 2500000, 3000000, 3500000, 4000000 }
 /*
 ** Parameters defining the location of the calibration/initialization
 ** information for the two Merlin devices.
