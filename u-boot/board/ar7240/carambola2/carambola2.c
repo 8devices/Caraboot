@@ -454,14 +454,14 @@ long int initdram(int board_type)
 #ifdef COMPRESSED_UBOOT
 int checkboard (char *board_string)
 {
-    strcpy(board_string, "Caraboot v2.0 (AR9331) U-boot");
+    strcpy(board_string, "Caraboot "CARABOOT_RELEASE" (AR9331) U-boot");
     return 0;
 }
 #else
 int checkboard (void)
 {
     printf("=====================================\n");
-    printf("Caraboot v2.0 (AR9331) U-boot\n");
+    printf("Caraboot "CARABOOT_RELEASE" (AR9331) U-boot\n");
     printf("http://www.8devices.com/\n");
     printf("-------------------------------------\n");
     return 0;

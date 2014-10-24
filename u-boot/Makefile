@@ -273,6 +273,7 @@ unconfig:
 
 carambola2_config: unconfig hornet_common_config
 	@echo "#define FLASH_SIZE $(FLASH_SIZE)" >>include/config.h
+	@echo "#define CARABOOT_RELEASE \"$(CARABOOT_RELEASE)\"" >>include/config.h
 	@./mkconfig -a carambola2 mips mips carambola2 ar7240 ar7240
 
 

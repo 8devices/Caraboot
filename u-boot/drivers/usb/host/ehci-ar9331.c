@@ -1,3 +1,11 @@
+/*
+ * Atheros AR933x USB driver initialization
+ *
+ * Copyright (C) 2014 Mantas Pucka <mantas@8devices.com>
+ *
+ * SPDX-License-Identifier:GPL-2.0
+ */
+
 #include <common.h>
 #include <pci.h>
 #include <usb.h>

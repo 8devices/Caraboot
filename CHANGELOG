@@ -1,0 +1,9 @@
+CHANGELOG
+=========
+
+ devel     - v2.1
+	* Add configurable boot-stop string support
+	* Add configurable baudrate support
+ 
+2014-10-21 - v2.0
+	* Initial USB support

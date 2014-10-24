@@ -1,3 +1,11 @@
+/*
+ * USB boot functions for Carambola2
+ *
+ * Copyright (C) 2014 Mantas Pucka <mantas@8devices.com>
+ *
+ * SPDX-License-Identifier:GPL-2.0
+ */
+
 #include <common.h>
 #include <command.h>
 #include <part.h>
