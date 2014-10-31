@@ -393,11 +393,9 @@ void board_init_r (gd_t *id, ulong dest_addr)
 
 	/* relocate environment function pointers etc. */
 	env_relocate();
-	
+
 #ifdef CONFIG_MACH_HORNET
-	//reinit LED and button config after relocation
-	gpio_env_init(1);   //LEDs
-	gpio_env_init(2);   //BUTTONs
+	custom_gpio_init();
 #endif
 
 	/* board MAC address */

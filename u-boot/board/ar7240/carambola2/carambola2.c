@@ -212,7 +212,7 @@ int parse_config(char* env, int max_args, void *regs, int *reg_count,
   if (tmp_item == NULL){
     return (-1);
   }
-  
+
   tmp_str1 = strdup(env);
   tok1=strsep(&tmp_str1, "/");
   while (tok1 != NULL){  
@@ -233,6 +233,7 @@ int parse_config(char* env, int max_args, void *regs, int *reg_count,
     tok1 = strsep(&tmp_str1, "/");
   }
   *reg_count = item_count1;
+  free(tmp_item);
   return (0);
 }
 
@@ -245,7 +246,7 @@ void apply_config(struct reg_conf *regs, int reg_count)
       ar7240_reg_wr(regs[i].addr, ((ar7240_reg_rd(regs[i].addr)|regs[i].set_mask)&(~regs[i].clear_mask)));
     }
     else{
-      printf("Reg: %x is not in valid GPIO range\n");
+      printf("Reg: %x is not in valid GPIO range\n", regs[i].addr);
     }
   }
   return;
@@ -312,7 +313,7 @@ void gpio_env_init(int mode)
 
   if (mode==0)
     apply_config(regs, reg_count);
-  
+
   free(regs);
   return;
 }
@@ -381,6 +382,17 @@ void ar7240_gpio_leds_off(void)
     }
 }
 
+// Call after relocation
+void custom_gpio_init(void)
+{
+	//init GPIO, LED and button config
+	gpio_env_init(0);   // custom GPIO init, turns on all LEDs
+	gpio_env_init(1);   //LEDs
+	gpio_env_init(2);   //BUTTONs
+	udelay(100 * 1000); 	// 100ms delay
+	ar7240_gpio_leds_off();
+}
+
 void show_activity(int arg)
 {
   uint32_t time = 0;
@@ -433,15 +445,7 @@ ar7240_mem_config(void)
 
     ar7240_usb_initial_config();
     ar7240_usb_otp_config();
-    
     //hornet_ddr_tap_init();
-
-    gpio_env_init(0);   // custom GPIO init, turns on all LEDs
-    gpio_env_init(1);   //LEDs
-    gpio_env_init(2);   //BUTTONs
-
-    udelay(100 * 1000); 	// 100ms delay
-    ar7240_gpio_leds_off();
 
     return (ar7240_ddr_find_size());
 }
