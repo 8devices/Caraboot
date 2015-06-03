@@ -116,7 +116,7 @@ simple_mips_cache_reset:
         li      t4, CFG_CACHELINE_SIZE
 
         mtc0    zero, CP0_TAGLO
-#ifdef CONFIG_WASP_SUPPORT
+#if defined(CONFIG_WASP_SUPPORT) || defined(CONFIG_MACH_QCA956x)
 	mtc0	zero, $29	# C0_TagHi
 	mtc0	zero, $28, 2	# C0_DTagLo
 	mtc0	zero, $29, 2	# C0_DTagHi
@@ -191,7 +191,7 @@ mips_cache_reset:
 
 
 	mtc0	zero, CP0_TAGLO
-#ifdef CONFIG_WASP_SUPPORT
+#if defined(CONFIG_WASP_SUPPORT) || defined(CONFIG_MACH_QCA956x)
 	mtc0	zero, $29	# C0_TagHi
 	mtc0	zero, $28, 2	# C0_DTagLo
 	mtc0	zero, $29, 2	# C0_DTagHi
@@ -347,7 +347,7 @@ mips_cache_flush:
     li      t2, KSEG0
     addu    t3, t0, t2
     mtc0    zero, CP0_TAGLO
-#ifdef CONFIG_WASP_SUPPORT
+#if defined(CONFIG_WASP_SUPPORT) || defined(CONFIG_MACH_QCA956x)
 	mtc0	zero, $29	# C0_TagHi
 	mtc0	zero, $28, 2	# C0_DTagLo
 	mtc0	zero, $29, 2	# C0_DTagHi
@@ -385,7 +385,7 @@ mips_icache_flush_ix:	/* Flush caches Index Invalidate */
 	li	t2,	KUSEG
 	addu	t3,	t0,	t2
 	mtc0	zero,	CP0_TAGLO
-#ifdef CONFIG_WASP_SUPPORT
+#if defined(CONFIG_WASP_SUPPORT) || defined(CONFIG_MACH_QCA956x)
 	mtc0	zero, $29	# C0_TagHi
 	mtc0	zero, $28, 2	# C0_DTagLo
 	mtc0	zero, $29, 2	# C0_DTagHi
@@ -414,7 +414,7 @@ mips_cache_lock_24k:
     li      t2, KSEG0
     addu    t3, t0, t2
     mtc0    zero, CP0_TAGLO
-#ifdef CONFIG_WASP_SUPPORT
+#if defined(CONFIG_WASP_SUPPORT) || defined(CONFIG_MACH_QCA956x)
 	mtc0	zero, $29	# C0_TagHi
 	mtc0	zero, $28, 2	# C0_DTagLo
 	mtc0	zero, $29, 2	# C0_DTagHi
@@ -425,7 +425,7 @@ cache_loop_lock:
     and     t4, t2, t5
     ori     t4, t4, (1 << 7)
     mtc0    t4, CP0_TAGLO
-#ifdef CONFIG_WASP_SUPPORT
+#if defined(CONFIG_WASP_SUPPORT) || defined(CONFIG_MACH_QCA956x)
 	mtc0	zero, $29	# C0_TagHi
 	mtc0	zero, $28, 2	# C0_DTagLo
 	mtc0	zero, $29, 2	# C0_DTagHi

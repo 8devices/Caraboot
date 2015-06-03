@@ -45,8 +45,10 @@ extern int timer_init(void);
 
 extern int incaip_set_cpuclk(void);
 
-#if defined(CONFIG_WASP_SUPPORT) || defined(CONFIG_MACH_QCA955x)
+#if defined(CONFIG_WASP_SUPPORT) || defined(CONFIG_MACH_QCA955x) || defined(CONFIG_MACH_QCA953x) || defined(CONFIG_MACH_QCA956x)
 void ath_set_tuning_caps(void);
+#else
+#define ath_set_tuning_caps()	/* nothing */
 #endif
 
 
@@ -330,6 +332,13 @@ void board_init_r (gd_t *id, ulong dest_addr)
 #ifndef CFG_ENV_IS_NOWHERE
 	extern char * env_name_spec;
 #endif
+#ifdef CONFIG_ATH_NAND_SUPPORT
+#ifdef ATH_SPI_NAND
+	extern ulong ath_spi_nand_init(void);
+#else
+	extern ulong ath_nand_init(void);
+#endif
+#endif
 	char *s, *e;
 	bd_t *bd;
 	int i;
@@ -374,9 +383,11 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	env_name_spec += gd->reloc_off;
 #endif
 
+#ifndef CONFIG_ATH_NAND_BR
 	/* configure available FLASH banks */
 	size = flash_init();
 	display_flash_config (size);
+#endif
 
 	bd = gd->bd;
 	bd->bi_flashstart = CFG_FLASH_BASE;
@@ -390,6 +401,10 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	/* initialize malloc() area */
 	mem_malloc_init();
 	malloc_bin_reloc();
+
+#ifdef CONFIG_ATH_NAND_BR
+	ath_nand_init();
+#endif
 
 	/* relocate environment function pointers etc. */
 	env_relocate();
@@ -447,6 +462,16 @@ void board_init_r (gd_t *id, ulong dest_addr)
 #endif
 	eth_initialize(gd->bd);
 #endif
+
+#if defined(CONFIG_ATH_NAND_SUPPORT) && !defined(CONFIG_ATH_NAND_BR)
+#ifdef ATH_SPI_NAND
+	ath_spi_nand_init();
+#else
+ 	ath_nand_init();
+#endif
+#endif
+
+	ath_set_tuning_caps(); /* Needed here not to mess with Ethernet clocks */
 
 	printf("=====================================\n\n");
 	/* main_loop() can return to retry autoboot, if so just run it again. */

@@ -213,7 +213,7 @@ reset:
 	mtc0	zero, $26
 	mtc0	zero, $27
 	mtc0	zero, $28
-#ifdef CONFIG_WASP_SUPPORT
+#if defined(CONFIG_WASP_SUPPORT) || defined(CONFIG_MACH_QCA955x) || defined(CONFIG_MACH_QCA953x) || defined(CONFIG_MACH_QCA956x)
 	mtc0	zero, $29	# C0_TagHi
 	mtc0	zero, $28, 2	# C0_DTagLo
 	mtc0	zero, $29, 2	# C0_DTagHi
@@ -254,7 +254,7 @@ reset:
 	lw      t1, 0(ra)
 	move	gp, t1
 
-#if defined(CONFIG_MACH_HORNET) && defined(CONFIG_HORNET_1_1_WAR)
+#if (defined(CONFIG_MACH_HORNET) && defined(CONFIG_HORNET_1_1_WAR)) || defined(CONFIG_MACH_QCA956x)
 /**************************************************************************/
 /*
  * WAR: Hornet 1.1 currently need a reset once we boot to let the resetb has
@@ -292,7 +292,7 @@ normal_path:
 
 	/* Initialize any external memory.
 	 */
-#if defined(CONFIG_AR7100) || defined(CONFIG_AR7240)
+#if defined(CONFIG_AR7100) || defined(CONFIG_AR7240) || defined(CONFIG_MACH_QCA955x) || defined(CONFIG_MACH_QCA953x) || defined(CONFIG_MACH_QCA956x)
 	la      t9, lowlevel_init
 	jalr    t9
 	nop
@@ -319,10 +319,15 @@ normal_path:
 
 rel_start:
 
-#if defined(CONFIG_AR7100) || defined(CONFIG_AR7240)
+#if defined(CONFIG_AR7100) || defined(CONFIG_AR7240) || defined(CONFIG_MACH_QCA955x) || defined(CONFIG_MACH_QCA953x)
 	/* REMAP_DISABLE */
 	li	a0, AR7100_SPI_CLOCK
 	li	t0, 0x43
+	sw	t0, 0(a0)
+#elif defined(CONFIG_MACH_QCA956x)
+	/* REMAP_DISABLE */
+	li	a0, AR7100_SPI_CLOCK
+	li	t0, 0x46
 	sw	t0, 0(a0)
 #endif
 
@@ -370,7 +375,7 @@ rel_start:
 
 	li	t0, CFG_SDRAM_BASE + CFG_INIT_SP_OFFSET
 #ifdef CFG_INIT_STACK_IN_SRAM
-	li	t0, 0xbd007000	/* Setup stack in SRAM */
+	li	t0, CFG_INIT_SRAM_SP_OFFSET	/* Setup stack in SRAM */
 #endif
 	la	sp, 0(t0)
 
@@ -488,8 +493,7 @@ in_ram:
 .type   ath_ddr_tap_cal, @function
 
 ath_ddr_tap_cal:
-
-	li	a0,	0xbd007f00
+	li	a0,	0xbd001f00
 	sw	zero,	0x0(a0)			// Place where the tap values are saved and used for SWEEP
 	sw	zero,	0x4(a0)			// Place where the number of passing taps are saved.
 	sw	zero,	0x14(a0)		// Place where the last pass tap value is stored
@@ -523,7 +527,7 @@ _poll_for_RTC_ON:
 
 _CHANGE_TAPS:
 
-	li	t0,	0xbd007f00		// Read the current value of the TAP for programming
+	li	t0,	0xbd001f00		// Read the current value of the TAP for programming
 	lw	t1,	0x0(t0)
 	li	t2,	0x00000000
 	or	t3,	t1,	t2
@@ -542,6 +546,31 @@ _CHANGE_TAPS:
 	li	t1,	0xfa5de83f		// 4 Row Address Bits, 4 Column Address Bits, 2 BA bits
 	sw	t1,	0x002c(t0)		// PERF_MASK_ADDR_0_ADDRESS
 
+#ifdef CONFIG_MACH_QCA953x
+	li	t1,	0x0000ffff
+	sw	t1,	0x0070(t0)		// PERF_COMP_AHB_GE0_1_ADDRESS
+
+	li	t1,	0x0000ffff
+	sw	t1,	0x0040(t0)		// PERF_COMP_AHB_GE1_0_ADDRESS
+
+	li	t1,	0x0000ffff
+	sw	t1,	0x0078(t0)		// PERF_COMP_AHB_GE1_1_ADDRESS
+
+	li	t1,	0x0000ffff
+	sw	t1,	0x0034(t0)		// PERF_MASK_AHB_GE0_0_ADDRESS
+
+	li	t1,	0x0000ffff
+	sw	t1,	0x006c(t0)		// PERF_MASK_AHB_GE0_1_ADDRESS
+
+	li	t1,	0x0000ffff
+	sw	t1,	0x003c(t0)		// PERF_MASK_AHB_GE1_0_ADDRESS
+
+	li	t1,	0x0000ffff
+	sw	t1,	0x0074(t0)		// PERF_MASK_AHB_GE1_1_ADDRESS
+
+	li	t1,	0x0000ffff
+	sw	t1,	0x0038(t0)		// PERF_COMP_AHB_GE0_0_ADDRESS
+#else // Wasp & Scorpion ...
 	li	t1,	0x545fc332
 	sw	t1,	0x0070(t0)		// PERF_COMP_AHB_GE0_1_ADDRESS
 
@@ -565,6 +594,7 @@ _CHANGE_TAPS:
 
 	li	t1,	0xaba03ccd
 	sw	t1,	0x0038(t0)		// PERF_COMP_AHB_GE0_0_ADDRESS
+#endif
 
 	li	t1,	0x00000001
 	sw	t1,	0x011c(t0)		// DDR_BIST_ADDRESS
@@ -595,37 +625,37 @@ _bist_done_poll:
 	bne	t3,	t2,	_iterate_tap
 
 pass_tap:
-	li	t0,	0xbd007f00
+	li	t0,	0xbd001f00
 	lw	t1,	0x4(t0)
 	addiu	t1,	t1,	0x1
 	sw	t1,	0x4(t0)
 
-	li	t0,	0xbd007f10
+	li	t0,	0xbd001f10
 	lw	t1,	0x0(t0)
 	li	t2,	0xaa55aa55
 	beq	t1,	t2,	_first_pass
 	nop
-	li	t0,	0xbd007f00
+	li	t0,	0xbd001f00
 	lw	t1,	0x0(t0)
-	li	t0,	0xbd007f10
+	li	t0,	0xbd001f10
 	sw	t1,	0x4(t0)
 	nop
 	b	_iterate_tap
 	nop
 
 _first_pass:
-	li	t0,	0xbd007f00
+	li	t0,	0xbd001f00
 	lw	t1,	0x0(t0)
-	li	t0,	0xbd007f10
+	li	t0,	0xbd001f10
 	sw	t1,	0x0(t0)
 	sw	t1,	0x4(t0)
 	nop
 
 _iterate_tap:
 
-	li	t0,	0xbd007f00
+	li	t0,	0xbd001f00
 	lw	t1,	0x0(t0)
-	li	t2,	0x1f
+	li	t2,	0x3f
 	beq	t1,	t2,	_STOP_TEST
 	nop
 	addiu	t1,	t1,	0x1
@@ -634,7 +664,7 @@ _iterate_tap:
 	b	_CHANGE_TAPS
 
 _STOP_TEST:
-	li	t0,	0xbd007f00
+	li	t0,	0xbd001f00
 	lw	t1,	0x4(t0)
 	bnez	t1,	_load_center_tap
 	nop
@@ -642,12 +672,12 @@ _STOP_TEST:
 	b	_load_tap_into_reg
 
 _load_center_tap:
-	li	t0,	0xbd007f10
+	li	t0,	0xbd001f10
 	lw	t1,	0x0(t0)
 	lw	t2,	0x4(t0)
 	add	t3,	t1,	t2
 	srl	t3,	t3,	0x1
-	li	t4,	0x1f
+	li	t4,	0x3f
 	and	t3,	t3,	t4
 
 _load_tap_into_reg:

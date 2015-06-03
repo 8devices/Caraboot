@@ -23,6 +23,10 @@
 
 PLATFORM_CPPFLAGS += -DCONFIG_MIPS -D__MIPS__
 
+#When compiling the assemble source code, it will 
+#miss these options if we use gcc-4.6.1
+PLATFORM_CPPFLAGS += -mabicalls -fpic
+
 ifeq ($(FLASH_TYPE),S25FL128P)
    PLATFORM_CPPFLAGS += -D$(FLASH_TYPE)
 endif

@@ -276,6 +276,32 @@ carambola2_config: unconfig hornet_common_config
 	@echo "#define CARABOOT_RELEASE \"$(CARABOOT_RELEASE)\"" >>include/config.h
 	@./mkconfig -a carambola2 mips mips carambola2 ar7240 ar7240
 
+lima_config		:	unconfig
+	@ >include/config.h
+	@echo '#define CONFIG_ATHEROS		1'	>include/config.h
+	@echo '#define CONFIG_MACH_QCA953x	1'	>>include/config.h
+	@echo '#define CFG_INIT_STACK_IN_SRAM	1'	>>include/config.h
+	@echo '#define CONFIG_'`echo $(CFG_BOARD_TYPE) | tr [a-z] [A-Z] | sed s/-/_/g`'	1' >>include/config.h
+	@echo '#define __CONFIG_BOARD_NAME $(CFG_BOARD_TYPE)' >>include/config.h
+	@echo '#define CONFIG_BOARD_NAME "$(CFG_BOARD_TYPE)"' >>include/config.h
+	@echo "#define BUILD_VERSION "\"$(BUILDVERSION)\" >>include/config.h
+
+ifdef pll
+	@echo '#define CFG_PLL_FREQ		$(pll)'	>>include/config.h
+else
+	@echo '#define CFG_PLL_FREQ		CFG_PLL_650_400_200'	>>include/config.h
+endif
+	@echo '#define CFG_ATHRS27_PHY 1' >>include/config.h
+	@echo '#define CFG_ATH_GMAC_NMACS 2' >>include/config.h
+	@echo '#define BOARD_NAME "$(CFG_BOARD_NAME)"' >>include/config.h
+
+ifdef FLASH_SIZE
+	@echo "#define FLASH_SIZE $(FLASH_SIZE)" >>include/config.h
+endif
+ifdef ATH_SPI_CS1_GPIO
+	@echo "#define CONFIG_ATH_SPI_CS1_GPIO $(ATH_SPI_CS1_GPIO)" >>include/config.h
+endif
+	@./mkconfig -a board953x mips mips board953x atheros
 
 hornet_common_config        :
 	@ >include/config.h
