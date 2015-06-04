@@ -5,6 +5,7 @@
 #include <config.h>
 #include <version.h>
 #include "ar7240_soc.h"
+#include <asm/gpiolib.h>
 
 extern void ar7240_ddr_initial_config(uint32_t refresh);
 extern int ar7240_ddr_find_size(void);
@@ -23,87 +24,24 @@ int ar7240_boot_status = 0;  	// Global variable to indicate if boot is succesfu
 				// negative values show failure
 #endif
 
-typedef struct reg_conf{
-  unsigned int addr;
-  unsigned int  set_mask;
-  unsigned int  clear_mask;
-};
-
 // Carambola2 GPIO LED definition
-
-typedef struct gpio_led_desc {
-  int id;
-  int bit;	//GPIO bit
-  int polarity; //1 - high active; 0 - low active
-  int disable; //1 - disable led, 0 - enable
+struct gpio_led_desc gpiolib_leds[]={
+  { .id=0, .bit=0,  .polarity=0, .disable=0 }, // WLAN LED
+  { .id=1, .bit=13, .polarity=1, .disable=0 }, // ETH0_LED
+  { .id=2, .bit=14, .polarity=1, .disable=0 }, // ETH1_LED
+  { .id=3, .bit=0,  .polarity=0, .disable=0 }, // USB recovery indication
+  { .id=4, .bit=0,  .polarity=0, .disable=1 }  // Reserved
 };
+int gpiolib_led_count = sizeof(gpiolib_leds)/sizeof(gpiolib_leds[0]);
 
-int  led_count=5;
-struct gpio_led_desc leds[]={
-  {// WLAN LED
-    .id=0,
-    .bit=0,
-    .polarity=0,
-    .disable=0
-  },
-  {// ETH0_LED
-    .id=1,
-    .bit=13,
-    .polarity=1,
-    .disable=0
-  },
-  {// ETH1_LED
-    .id=2,
-    .bit=14,
-    .polarity=1,
-    .disable=0
-  },
-  {// USB recovery indication
-    .id=3,
-    .bit=0,
-    .polarity=0,
-    .disable=0
-  },
-    {// Nothing
-    .id=4,
-    .bit=0,
-    .polarity=0,
-    .disable=1
-  }
+struct gpio_led_desc gpiolib_buttons[]={
+  { .id=0, .bit=11, .polarity=0, .disable=0 }, // USB Boot
+  { .id=1, .bit=0,  .polarity=0, .disable=1 }, // Reserved
+  { .id=2, .bit=0,  .polarity=0, .disable=1 }, // Reserved
+  { .id=3, .bit=0,  .polarity=0, .disable=1 }, // Reserved
+  { .id=4, .bit=0,  .polarity=0, .disable=1 }, // Reserved
 };
-
-struct gpio_led_desc buttons[]={
-  {// USB Boot
-    .id=0,
-    .bit=11,
-    .polarity=0,
-    .disable=0
-  },
-  {// Nothing
-    .id=1,
-    .bit=0,
-    .polarity=0,
-    .disable=1
-  },
-  {// Nothing
-    .id=2,
-    .bit=0,
-    .polarity=0,
-    .disable=1
-  },
-  {// Nothing
-    .id=3,
-    .bit=0,
-    .polarity=0,
-    .disable=1
-  },
-    {// Nothing
-    .id=4,
-    .bit=0,
-    .polarity=0,
-    .disable=1
-  }
-};
+int gpiolib_button_count = sizeof(gpiolib_buttons)/sizeof(gpiolib_buttons[0]);
 
 void
 ar7240_usb_otp_config(void)
@@ -145,180 +83,6 @@ ar7240_usb_otp_config(void)
     }
 }
 
-void assign_gpio(void *data, int item_count1, int* tmp_item)
-{
-      struct reg_conf *regs;
-      regs = (struct reg_conf*)data;
-      regs[item_count1].addr       = tmp_item[0];
-      regs[item_count1].set_mask   = tmp_item[1];
-      regs[item_count1].clear_mask = tmp_item[2];
-      return;
-}
-
-void assign_leds(void *data, int item_count1, int* tmp_item)
-{    
-      if (tmp_item[0]<5 && tmp_item[0]>=0){
-	int id=tmp_item[0];
-	leds[id].id       = id;
-	leds[id].bit      = tmp_item[1];
-	leds[id].polarity = tmp_item[2];
-	leds[id].disable  = tmp_item[3];
-      }
-      return;
-}
-
-void assign_buttons(void *data, int item_count1, int* tmp_item)
-{    
-      if (tmp_item[0]<5 && tmp_item[0]>=0){
-	int id=tmp_item[0];
-	buttons[id].id       = id;
-	buttons[id].bit      = tmp_item[1];
-	buttons[id].polarity = tmp_item[2];
-	buttons[id].disable  = tmp_item[3];
-      }
-      return;
-}
-
-int convert_hex(char* str, int item_nr)
-{
-  return (simple_strtol(str, NULL, 16));
-}
-
-int convert_dec(char* str, int item_nr)
-{
-  return (simple_strtol(str, NULL, 10));
-}
-
-int count_args(char* env)
-{
-  char* pos;
-  pos = strchr(env,'/');
-  unsigned int reg_count=1;
-  while (pos != NULL){
-    reg_count++;
-    pos = strchr(pos+1,'/');
-  }
-  return reg_count;
-}
-
-int parse_config(char* env, int max_args, void *regs, int *reg_count,
-		 void (*assign)(void*, int, int*),
-		 int (*convert)(char*, int)  )
-{
-  char *tmp_str1, *tmp_str2, *tok1, *tok2;  
-  int item_count1=0;
-  int item_count2;
-  int* tmp_item = malloc((sizeof(int))*max_args);
-  if (tmp_item == NULL){
-    return (-1);
-  }
-
-  tmp_str1 = strdup(env);
-  tok1=strsep(&tmp_str1, "/");
-  while (tok1 != NULL){  
-    item_count2=0;
-    tmp_str2 = strdup(tok1);
-    tok2=strsep(&tmp_str2, ":");
-    while (tok2 != NULL){
-      item_count2++;
-      if (item_count2 > max_args)
-	break;
-      tmp_item[item_count2-1] = convert(tok2,item_count2);
-      tok2=strsep(&tmp_str2, ":");
-    }
-    if (item_count2 == max_args){
-      assign(regs, item_count1, tmp_item);
-      item_count1++;
-    }
-    tok1 = strsep(&tmp_str1, "/");
-  }
-  *reg_count = item_count1;
-  free(tmp_item);
-  return (0);
-}
-
-void apply_config(struct reg_conf *regs, int reg_count)
-{
-  int i;
-  for (i=0; i<reg_count; i++){
-    //Check if given registers belong to GPIO range
-    if ((regs[i].addr>=0x18040000) && (regs[i].addr<=0x18040044)){
-      ar7240_reg_wr(regs[i].addr, ((ar7240_reg_rd(regs[i].addr)|regs[i].set_mask)&(~regs[i].clear_mask)));
-    }
-    else{
-      printf("Reg: %x is not in valid GPIO range\n", regs[i].addr);
-    }
-  }
-  return;
-}
-
-void gpio_env_init(int mode)
-{
-  int max_args;
-  void (*assign)(struct reg_conf*, int, int*);
-  int (*convert)(char* ,int);
-  char* gpio_env;
-  int ret;
-  struct reg_conf *regs;
-  int reg_count;
-  int i;
-
-  if (mode==0){
-    assign = &assign_gpio;
-    convert = &convert_hex;
-    max_args = 3;
-    gpio_env = getenv("gpio_config");
-  }
-  else{
-    convert = &convert_dec;
-    max_args = 4;
-    if (mode==1){
-      assign = &assign_leds;
-      gpio_env = getenv("led_config");
-    }
-    else if(mode == 2){
-      assign = &assign_buttons;
-      gpio_env = getenv("button_config");     
-    }
-  }
-
-  if (gpio_env == NULL){
-    if (mode==0){
-      //Default init
-      //set output enable
-      ar7240_reg_wr (AR7240_GPIO_OE, (ar7240_reg_rd(AR7240_GPIO_OE) | (1<<13)|(1<<14)|(1<<0) ));
-      //set ETH0 ETH1 LED output to high
-      ar7240_reg_wr (AR7240_GPIO_SET, (1<<13)|(1<<14));
-      //set WLAN LED output to low (reverse polarity LED)
-      ar7240_reg_wr (AR7240_GPIO_CLEAR, (1<<0));
-      //Enable USB boot sense GPIO as input
-      ar7240_reg_wr (AR7240_GPIO_OE, (ar7240_reg_rd(AR7240_GPIO_OE) & ~(1<<11)));
-    }
-    return;
-  }
-
-  reg_count = count_args(gpio_env);
-
-  if (mode==0){
-    regs = malloc(sizeof(struct reg_conf)*reg_count);
-    if (regs == NULL)
-      return;
-  }
-  else
-    regs = NULL;
-
-  ret = parse_config(gpio_env, max_args, (void*)regs, &reg_count, assign, convert);
-  if (ret<0)
-    return;
-
-  if (mode==0)
-    apply_config(regs, reg_count);
-
-  free(regs);
-  return;
-}
-
-
 void ar7240_gpio_config(void)
 {
     /* Disable clock obs 
@@ -339,60 +103,44 @@ void ar7240_gpio_config(void)
     //ar7240_reg_wr (HORNET_BOOTSTRAP_STATUS, (ar7240_reg_rd(HORNET_BOOTSTRAP_STATUS) | (0x1<<18)));
 }
 
-int button_read(int button_id){
-  if (buttons[button_id].disable != 1){
-    if (((ar7240_reg_rd(AR7240_GPIO_IN)>>buttons[button_id].bit)&0x01) == buttons[button_id].polarity)
-      return 1;
-    else 
-      return 0;
-  }
-  else
-    return -1;
+unsigned int board_get_gpio_input(void)
+{
+	return ar7240_reg_rd(AR7240_GPIO_IN);
 }
 
+int board_set_gpio_regs(unsigned int addr, unsigned int set, unsigned int clear)
+{
+	if ((addr >= 0x18040000) && (addr <= 0x18040044) &&
+		(addr % 4 == 0)){
+		ar7240_reg_wr(addr, ((ar7240_reg_rd(addr) | set) & (~clear)));
+		return 0;
+	}
+	return 1;
+}
+
+void board_gpiolib_defaults(void)
+{
+	//set output enable
+	ar7240_reg_wr (AR7240_GPIO_OE, (ar7240_reg_rd(AR7240_GPIO_OE) | (1<<13)|(1<<14)|(1<<0) ));
+	//set ETH0 ETH1 LED output to high
+	ar7240_reg_wr (AR7240_GPIO_SET, (1<<13)|(1<<14));
+	//set WLAN LED output to low (reverse polarity LED)
+	ar7240_reg_wr (AR7240_GPIO_CLEAR, (1<<0));
+	//Enable USB boot sense GPIO as input
+	ar7240_reg_wr (AR7240_GPIO_OE, (ar7240_reg_rd(AR7240_GPIO_OE) & ~(1<<11)));
+}
+
+void board_gpio_set(int gpio)
+{
+	ar7240_reg_wr (AR7240_GPIO_SET, (1<<gpio));
+}
+
+void board_gpio_clear(int gpio)
+{
+	ar7240_reg_wr (AR7240_GPIO_CLEAR, (1<<gpio));
+}
 
 #ifdef CONFIG_SHOW_ACTIVITY
-void ar7240_gpio_led_switch(int led_id, int state)
-//switch LED (led_id is defined in struct[] leds) to state (0 - off, 1 -on)
-{
-  int i;
-  for (i=0; i<led_count;i++){
-      if (leds[i].disable != 1){
-	if (leds[i].id==led_id) {
-	    if ((!leds[i].polarity) ^ state){
-		ar7240_reg_wr (AR7240_GPIO_SET, (1<<leds[i].bit));
-	    }
-	    else{
-		ar7240_reg_wr (AR7240_GPIO_CLEAR, (1<<leds[i].bit));
-	    }
-	    break;
-	}
-      }
-  }
-  return;
-}
-
-void ar7240_gpio_leds_off(void)
-{
-    int i;
-    for (i=0; i<led_count;i++){
-      if (leds[i].disable != 1){
-	ar7240_gpio_led_switch(i, 0);
-      }
-    }
-}
-
-// Call after relocation
-void custom_gpio_init(void)
-{
-	//init GPIO, LED and button config
-	gpio_env_init(0);   // custom GPIO init, turns on all LEDs
-	gpio_env_init(1);   //LEDs
-	gpio_env_init(2);   //BUTTONs
-	udelay(100 * 1000); 	// 100ms delay
-	ar7240_gpio_leds_off();
-}
-
 void show_activity(int arg)
 {
   uint32_t time = 0;
@@ -404,12 +152,11 @@ void show_activity(int arg)
 	//Blink 3 first LEDs in descriptor together
 	led += 1;
 	if (led > 2) led = 0;
-	ar7240_gpio_led_switch(led ,(time>>24)&0x01);
+	gpiolib_led_switch(led ,(time>>24)&0x01);
     }
     return;
 }
 #endif
-
 
 #ifdef CONFIG_SHOW_BOOT_PROGRESS
 void show_boot_progress(int arg)
@@ -418,7 +165,6 @@ void show_boot_progress(int arg)
     return;
 }
 #endif
-
 
 int
 ar7240_mem_config(void)

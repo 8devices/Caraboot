@@ -26,8 +26,6 @@ OBJS	=			\
 	../common/ath_pci.o	\
 	../common/qca-eth-953x.o
 
-OBJS	+= ../../ar7240/carambola2/carambola_factory.o
-OBJS	+= ../../ar7240/common/usb_boot.o
 
 #
 # The files included in EXTRA_OBJS use some functions that are not

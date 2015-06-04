@@ -21,6 +21,7 @@
 #include <config.h>
 #include <version.h>
 #include <atheros.h>
+#include <asm/gpiolib.h>
 
 extern int ath_ddr_initial_config(uint32_t refresh);
 extern int ath_ddr_find_size(void);
@@ -117,41 +118,71 @@ ath_usb_initial_config(void)
 	udelay(10);
 }
 
-void ath_gpio_config(void)
+void ath_gpio_config(void)  //TODO
 {
 	/* disable the CLK_OBS on GPIO_4 and set GPIO4 as input */
 	ath_reg_rmw_clear(GPIO_OE_ADDRESS, (1 << 4));
 	ath_reg_rmw_clear(GPIO_OUT_FUNCTION1_ADDRESS, GPIO_OUT_FUNCTION1_ENABLE_GPIO_4_MASK);
-	ath_reg_rmw_set(GPIO_OUT_FUNCTION1_ADDRESS, GPIO_OUT_FUNCTION1_ENABLE_GPIO_4_SET(0x80));
 	ath_reg_rmw_set(GPIO_OE_ADDRESS, (1 << 4));
-	/* Set GPIO 13 as input for LED functionality to be OFF during bootup */
-	ath_reg_rmw_set(GPIO_OE_ADDRESS, (1 << 13));
-	/* Turn off JUMPST_LED and 5Gz LED during bootup */
-	ath_reg_rmw_set(GPIO_OE_ADDRESS, (1 << 15));
-	ath_reg_rmw_set(GPIO_OE_ADDRESS, (1 << 12));
 }
 
-void ar7240_gpio_led_switch(int led_id, int state)
+unsigned int board_get_gpio_input(void)
 {
-	return;
+	return ath_reg_rd(GPIO_IN_ADDRESS);
 }
 
-void show_boot_progress(int arg)
+int board_set_gpio_regs(unsigned int addr, unsigned int set, unsigned int clear)
 {
+	if ((addr >= 0x18040000) && (addr <= 0x18040070) &&
+		(addr != 0x1804000c) && (addr != 0x18040010) &&
+		(addr % 4 == 0)) {
+		ath_reg_wr(addr, ((ath_reg_rd(addr) | set) & (~clear)));
+		return 0;
+	}
+	return 1;
+}
+
+void board_gpiolib_defaults(void)
+{
+	//Enable USB boot sense GPIO as input
+	ath_reg_rmw_set(GPIO_OE_ADDRESS, (1 << 17));
+}
+
+void board_gpio_set(int gpio)
+{
+	ath_reg_wr_nf(GPIO_SET_ADDRESS, (1<<gpio));
+}
+
+void board_gpio_clear(int gpio)
+{
+	ath_reg_wr_nf(GPIO_CLEAR_ADDRESS, (1<<gpio));
+}
+
+#ifdef CONFIG_SHOW_ACTIVITY
+void show_activity(int arg)
+{
+  uint32_t time = 0;
+  static uint32_t led = 0;
+  time =get_timer(0);
+
+    if ( (board953x_boot_status<0) )
+    {
+	//Blink 3 first LEDs in descriptor together
+	led += 1;
+	if (led > 2) led = 0;
+	gpiolib_led_switch(led ,(time>>24)&0x01);
+    }
     return;
 }
+#endif
 
-int button_read(int button_id){
-  //if (buttons[button_id].disable != 1){
-    //if (((ar7240_reg_rd(AR7240_GPIO_IN)>>buttons[button_id].bit)&0x01) == buttons[button_id].polarity)
-      if (((ath_reg_rd(GPIO_IN_ADDRESS)>> 17 )&0x01) == 0)
-      return 1;
-    else 
-      return 0;
-  //}
-  //else
-  //  return -1;
+#ifdef CONFIG_SHOW_BOOT_PROGRESS
+void show_boot_progress(int arg)
+{
+    board953x_boot_status = arg;
+    return;
 }
+#endif
 
 int
 ath_mem_config(void)
@@ -190,8 +221,11 @@ long int initdram(int board_type)
 	return (ath_mem_config());
 }
 
-int	checkboard(args)
+int checkboard(args)
 {
-	board_str(CONFIG_BOARD_NAME);
+    printf("=====================================\n");
+    printf("Caraboot "CARABOOT_RELEASE" (QCA9531) U-boot\n");
+    printf("http://www.8devices.com/\n");
+    printf("-------------------------------------\n");
 	return 0;
 }

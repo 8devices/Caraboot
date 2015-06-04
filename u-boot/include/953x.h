@@ -3087,6 +3087,8 @@
 #define GPIO_OE_ADDRESS                                              0x18040000
 #define GPIO_IN_ADDRESS                                              0x18040004
 #define GPIO_OUT_ADDRESS                                             0x18040008
+#define GPIO_SET_ADDRESS                                             0x1804000C
+#define GPIO_CLEAR_ADDRESS                                           0x18040010
 #define GPIO_SPARE_ADDRESS                                           0x18040070
 
 

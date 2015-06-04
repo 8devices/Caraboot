@@ -69,7 +69,8 @@ COBJS	= main.o circbuf.o \
 	  hush.o kgdb.o lcd.o lists.o lynxkdi.o \
 	  memsize.o miiphybb.o miiphyutil.o \
 	  s_record.o serial.o soft_i2c.o soft_spi.o \
-	  usb.o usb_hub.o usb_kbd.o usb_storage.o \
+	  usb.o usb_hub.o usb_storage.o usb_boot.o \
+	  factory.o \
 	  crc16.o xyzModem.o
 endif
 

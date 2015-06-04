@@ -27,7 +27,7 @@ LIB	= lib$(ARCH).a
 
 AOBJS	=
 
-COBJS	= board.o time.o mips_linux.o
+COBJS	= board.o time.o mips_linux.o gpiolib.o
 
 OBJS	= $(AOBJS) $(COBJS)
 

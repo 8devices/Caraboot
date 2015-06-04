@@ -506,7 +506,7 @@ void main_loop (void)
 
 	if (bootdelay >= 0 && s && !abortboot (bootdelay)) {
 
-#ifdef CONFIG_CARAMBOLA_FACTORY_MODE
+#ifdef CONFIG_FACTORY_MODE
 		carambola_factory_mode();
 #endif
 		

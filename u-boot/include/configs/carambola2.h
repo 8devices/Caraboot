@@ -233,9 +233,9 @@
 #define CFG_HUSH_PARSER
 #define CFG_PROMPT_HUSH_PS2 "hush>"
 
-#define CONFIG_CARAMBOLA_FACTORY_MODE
-#define CFG_C2_IMG_LOAD_ADDR		"0x80F00000"
-#define CFG_C2_IMG_FILENAME		"carambola2.bin"
+#define CONFIG_FACTORY_MODE
+#define CFG_FACTORY_IMG_LOAD_ADDR		"0x80F00000"
+#define CFG_FACTORY_IMG_FILENAME		"carambola2.bin"
 
 #define CONFIG_USB_EHCI
 #define CONFIG_USB_STORAGE 
@@ -272,6 +272,8 @@
 #define CFG_BAUDRATE_TABLE { 300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 56000, 57600, \
 			115200, 128000, 230400, 250000, 256000, 460800, 500000, 576000, 921600, \
 			1000000, 1152000, 1500000, 2000000, 3000000}
+
+#define CONFIG_GPIOLIB
 /*
 ** Parameters defining the location of the calibration/initialization
 ** information for the two Merlin devices.

@@ -3,8 +3,6 @@ include $(TOPDIR)/config.mk
 LIB	= lib$(BOARD).a
 
 OBJS	= $(BOARD).o flash.o ../common/ar7240_flash.o ../common/ar7240_s26_phy.o
-OBJS	+= carambola_factory.o
-OBJS	+= ../common/usb_boot.o
 SOBJS	= ../common/lowlevel_init.o
 SOBJS	+= hornet_pll_init.o
 

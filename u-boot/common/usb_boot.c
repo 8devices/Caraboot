@@ -12,10 +12,12 @@
 #include <usb.h>
 #include <fs.h>
 #include <fat.h>
+#include <asm/gpiolib.h>
 
 #define XMK_STR(x) #x
 #define MK_STR(x) XMK_STR(x)
 
+#ifdef CONFIG_USB_BOOT
 
 void usbboot_indicate_recovery(int type)
 {
@@ -25,9 +27,9 @@ void usbboot_indicate_recovery(int type)
 
 	if (type) cnt=2;
 	while(cnt--){
-		ar7240_gpio_led_switch(3, 1);
+		gpiolib_led_switch(3, 1);
 		mdelay(500);
-		ar7240_gpio_led_switch(3, 0);
+		gpiolib_led_switch(3, 0);
 		mdelay(500);
 	}
 	if (!type) mdelay(500); //wait 0.5s after last blink before recovery
@@ -57,7 +59,7 @@ int usbboot_recovery(char * boot_dev_part, char * boot_file_name)
 	int fat_read_ret;
 	char flash_cmd [128];
 	char image_size[16];
-	
+
 	fs_set_blk_dev ("usb", boot_dev_part, FS_TYPE_FAT);
 	fat_read_ret = do_fat_read_at(boot_file_name,
 					0,
@@ -86,8 +88,8 @@ int usbboot_recovery(char * boot_dev_part, char * boot_file_name)
 		int  argc_flash=2;
 		char* argv_flash[]={"run", "recovery_flash_cmd"};
 		cmd_tbl_t *cmdtp=NULL;
-		
-		int flash_ret = do_run ( cmdtp,  0,  argc_flash, argv_flash);		
+
+		int flash_ret = do_run ( cmdtp,  0,  argc_flash, argv_flash);
 		printf ("\nFlashing sucsessful. Remove USB storage with recovery image.");
 		usbboot_indicate_recovery(1);
 		do_reset(NULL, 0, 0, NULL);
@@ -105,21 +107,21 @@ int usbboot_scan(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	
 	char* boot_file_name; //Can include directories eg. "boot/vmlinux.uimage"
 	char* recovery_file_name;
-	char* boot_dev_part; 
-	/* boot_dev_part format "<usb device>:<partition>", 
+	char* boot_dev_part;
+	/* boot_dev_part format "<usb device>:<partition>",
 	 * eg. "0:1" - frst usb storage device's first partition
 	 * */
-	  
+
 	boot_file_name = getenv ("bootfile");
 	if (boot_file_name == NULL)
 		boot_file_name = CFG_USB_BOOT_FILENAME;
-	
+
 	recovery_file_name = getenv ("recoveryfile");
 	if (recovery_file_name == NULL)
 		recovery_file_name = CFG_USB_RECOVERY_FILENAME;
-	
+
 	boot_dev_part = getenv ("bootdev");
-	
+
 	usb_stop();
 
 	if (usb_init() < 0)
@@ -174,10 +176,10 @@ void do_usb_boot (void){
 		s_gpio = !(strcmp(boot_mode, "gpio"));
 		s_never = !(strcmp(boot_mode, "never"));
 	}
-	
+
 	if ( (s_force && s_never == 0) || (boot_mode == NULL))
 		s_gpio = 1;
-	
+
 	if (s_never){
 		printf("USB boot is disabled in environment\n");
 		return;
@@ -187,14 +189,16 @@ void do_usb_boot (void){
 		usbboot_scan(0,0,0,0);
 	}
 	if ( s_gpio ){
-	debug("USB GPIO: %d\n", button_read(CFG_USB_BOOT_BUTTON_ID));
-	if (button_read(CFG_USB_BOOT_BUTTON_ID)==1)
+	debug("USB GPIO: %d\n", gpiolib_button_read(CFG_USB_BOOT_BUTTON_ID));
+	if (gpiolib_button_read(CFG_USB_BOOT_BUTTON_ID)==1)
 		usbboot_scan(0,0,0,0);
 	}
 }
-	
+
 U_BOOT_CMD(
 	usb_boot_file,	5,	1,	usbboot_scan,
 	"usb_boot_file - Automatic boot/recovery from file in USB drive\n",
 	" "
 );
+
+#endif

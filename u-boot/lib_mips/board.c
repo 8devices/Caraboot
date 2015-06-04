@@ -28,6 +28,7 @@
 #include <version.h>
 #include <net.h>
 #include <environment.h>
+#include <asm/gpiolib.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -409,8 +410,8 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	/* relocate environment function pointers etc. */
 	env_relocate();
 
-#ifdef CONFIG_MACH_HORNET
-	custom_gpio_init();
+#ifdef CONFIG_GPIOLIB
+	gpiolib_customized_init();
 #endif
 
 	/* board MAC address */
