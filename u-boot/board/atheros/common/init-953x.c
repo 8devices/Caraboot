@@ -56,7 +56,7 @@ ath_ram_type(uint32_t bs)
 	}
 }
 
-#define CFG_DDR2_SCORPION_CAS_LATENCY	4
+#define CFG_DDR2_SCORPION_CAS_LATENCY	5
 
 #ifdef CONFIG_TB614
 #	define DDR_CONFIG2_SWAP_A26_A27_VAL	(0x1)

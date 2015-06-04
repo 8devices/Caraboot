@@ -249,7 +249,7 @@ int athrs27_reg_init_lan(void)
 
 
     /* reset switch */
-    printf(MODULE_NAME ": resetting s27\n");
+    debug(MODULE_NAME ": resetting s27\n");
     athrs27_reg_write(0x0, athrs27_reg_read(0x0)|0x80000000);
 
     while(i--) {
@@ -257,7 +257,7 @@ int athrs27_reg_init_lan(void)
         if(!(athrs27_reg_read(0x0)&0x80000000))
             break;
     }
-    printf(MODULE_NAME ": s27 reset done\n");
+    debug(MODULE_NAME ": s27 reset done\n");
     athrs27_reg_write(PORT_STATUS_REGISTER0,0x4e);
 
     athrs27_reg_rmw(OPERATIONAL_MODE_REG0,(1<<6));  /* Set GMII mode */
@@ -282,13 +282,13 @@ int athrs27_reg_init_lan(void)
 
 #if S27_PHY_DEBUG
         rd_val = s27_rd_phy(phyAddr,ATHR_PHY_FUNC_CONTROL);
-        printf("S27 ATHR_PHY_FUNC_CONTROL (%d):%x\n",phyAddr,rd_val);
+        debug("S27 ATHR_PHY_FUNC_CONTROL (%d):%x\n",phyAddr,rd_val);
         rd_val = s27_rd_phy(phyAddr,ATHR_PHY_ID1);
-        printf("S27 PHY ID  (%d) :%x\n",phyAddr, rd_val);
+        debug("S27 PHY ID  (%d) :%x\n",phyAddr, rd_val);
         rd_val = s27_rd_phy(phyAddr,ATHR_PHY_SPEC_STATUS);
-        printf("S27 PHY CTRL  (%d) :%x\n",phyAddr, rd_val);
+        debug("S27 PHY CTRL  (%d) :%x\n",phyAddr, rd_val);
         rd_val = s27_rd_phy(phyAddr,ATHR_PHY_STATUS);
-        printf("S27 ATHR PHY STATUS  (%d) :%x\n",phyAddr, rd_val);
+        debug("S27 ATHR PHY STATUS  (%d) :%x\n",phyAddr, rd_val);
 #endif
     }
 
@@ -410,7 +410,7 @@ athrs27_phy_setup(int ethUnit)
                          | ATHR_CTRL_SOFTWARE_RESET);
         }
         else  {
-		printf("############ is emulation ############\n");
+		debug("############ is emulation ############\n");
 
            if(ATHR_ETHUNIT(phyUnit) == ENET_UNIT_WAN) {
                s27_wr_phy(phyAddr, ATHR_AUTONEG_ADVERT,ATHR_ADVERTISE_ALL);
@@ -430,9 +430,9 @@ athrs27_phy_setup(int ethUnit)
            }
        }
        rd_val = s27_rd_phy(phyAddr,ATHR_PHY_CONTROL);
-       printf("%s ATHR_PHY_CONTROL %d :%x\n",__func__,phyAddr,rd_val);
+       debug("%s ATHR_PHY_CONTROL %d :%x\n",__func__,phyAddr,rd_val);
        rd_val = s27_rd_phy(phyAddr,ATHR_PHY_SPEC_STATUS);
-       printf("%s ATHR_PHY_SPEC_STAUS %d :%x\n",__func__,phyAddr,rd_val);
+       debug("%s ATHR_PHY_SPEC_STAUS %d :%x\n",__func__,phyAddr,rd_val);
     }
     if (!foundPhy) {
         return FALSE; /* No PHY's configured for this ethUnit */
@@ -499,7 +499,7 @@ athrs27_phy_setup(int ethUnit)
         /* turn off power saving */
         s27_wr_phy(phyUnit, 29, 41);
         s27_wr_phy(phyUnit, 30, 0);
-        printf("def_ S27_VER_1_0\n");
+        debug("def_ S27_VER_1_0\n");
 #endif
     }
 

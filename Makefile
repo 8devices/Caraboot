@@ -19,7 +19,11 @@ export MAKECMD=make ARCH=mips
 export UBOOT_GCC_4_3_3_EXTRA_CFLAGS=-fPIC
 export BUILD_TYPE=squashfs
 
-BOARD_TYPE=carambola2
+####
+BOARD_TYPE=lima
+export ETH_CONFIG=_s27
+####
+
 export COMPRESSED_UBOOT=0
 export FLASH_SIZE=16
 export NEW_DDR_TAP_CAL=1

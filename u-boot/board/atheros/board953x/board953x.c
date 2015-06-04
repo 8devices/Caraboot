@@ -39,14 +39,38 @@ extern int ath_ddr_find_size(void);
 	strcat(s, ver);								\
 } while (0)
 #else
-#	define prmsg	printf
+#	define prmsg	debug
 #	define args		void
 #	define board_str(a)							\
 	uint32_t        revid;							\
 	if(((revid=ath_reg_rd(RST_REVISION_ID_ADDRESS))&0xff0)==0x140) 		\
-	printf(a " - Honey Bee 1.%d", revid & 0xf);				\
+	debug(a " - Honey Bee 1.%d", revid & 0xf);				\
 	else									\ 
-	printf(a " - Honey Bee 2.%d", revid & 0xf);
+	debug(a " - Honey Bee 2.%d", revid & 0xf);
+#endif
+
+// Lima GPIO LED definition
+struct gpio_led_desc gpiolib_leds[]={
+  { .id=0, .bit=0,  .polarity=0, .disable=1 }, // WLAN LED (Unused)
+  { .id=1, .bit=0,  .polarity=0, .disable=1 }, // ETH0_LED (Unused)
+  { .id=2, .bit=0,  .polarity=0, .disable=1 }, // ETH1_LED (Unused)
+  { .id=3, .bit=0,  .polarity=0, .disable=1 }, // USB recovery indication (Unused)
+  { .id=4, .bit=0,  .polarity=0, .disable=1 }  // Reserved
+};
+int gpiolib_led_count = sizeof(gpiolib_leds)/sizeof(gpiolib_leds[0]);
+
+struct gpio_led_desc gpiolib_buttons[]={
+  { .id=0, .bit=16, .polarity=0, .disable=0 }, // USB Boot
+  { .id=1, .bit=0, .polarity=0, .disable=1 }, // Reserved
+  { .id=2, .bit=0,  .polarity=0, .disable=1 }, // Reserved
+  { .id=3, .bit=0,  .polarity=0, .disable=1 }, // Reserved
+  { .id=4, .bit=0,  .polarity=0, .disable=1 }, // Reserved
+};
+int gpiolib_button_count = sizeof(gpiolib_buttons)/sizeof(gpiolib_buttons[0]);
+
+#ifdef CONFIG_SHOW_BOOT_PROGRESS
+// Global variable to indicate if boot is succesful
+int board953x_boot_status = 0;
 #endif
 
 void
@@ -105,6 +129,28 @@ void ath_gpio_config(void)
 	/* Turn off JUMPST_LED and 5Gz LED during bootup */
 	ath_reg_rmw_set(GPIO_OE_ADDRESS, (1 << 15));
 	ath_reg_rmw_set(GPIO_OE_ADDRESS, (1 << 12));
+}
+
+void ar7240_gpio_led_switch(int led_id, int state)
+{
+	return;
+}
+
+void show_boot_progress(int arg)
+{
+    return;
+}
+
+int button_read(int button_id){
+  //if (buttons[button_id].disable != 1){
+    //if (((ar7240_reg_rd(AR7240_GPIO_IN)>>buttons[button_id].bit)&0x01) == buttons[button_id].polarity)
+      if (((ath_reg_rd(GPIO_IN_ADDRESS)>> 17 )&0x01) == 0)
+      return 1;
+    else 
+      return 0;
+  //}
+  //else
+  //  return -1;
 }
 
 int

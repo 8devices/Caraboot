@@ -28,7 +28,7 @@ include $(TOPDIR)/config.mk
 LIB	= libdrivers.a
 
 OBJS   =  pci.o netconsole.o
-OBJS   =  usb/host/ehci-hcd.o usb/host/ehci-ar9331.o
+OBJS   +=  usb/host/ehci-hcd.o usb/host/ehci-ar9331.o
 
 
 all:	$(LIB)

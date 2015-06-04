@@ -107,7 +107,7 @@ typedef unsigned int ath_reg_t;
 #ifdef COMPRESSED_UBOOT
 #	define prmsg(...)
 #else
-#	define prmsg	printf
+#	define prmsg	debug
 #endif
 
 #endif /* __ASSEMBLY__ */

@@ -168,7 +168,7 @@ void ath_gmac_mii_setup(ath_gmac_mac_t *mac)
 	ath_reg_wr(SWITCH_CLOCK_SPARE_ADDRESS, 0x231);
 	//ath_reg_wr(SWITCH_CLOCK_SPARE_ADDRESS, 0x520);
 	if ((mac->mac_unit == 1)) {
-		printf("Honey Bee ---->  MAC 1 S27 PHY *\n");
+		debug("Honey Bee ---->  MAC 1 S27 PHY *\n");
 		ath_reg_wr(ATH_ETH_CFG, ETH_CFG_ETH_RXDV_DELAY_SET(3) |
 					ETH_CFG_ETH_RXD_DELAY_SET(3)|
 					ETH_CFG_RGMII_GE0_SET(1));
@@ -185,7 +185,7 @@ void ath_gmac_mii_setup(ath_gmac_mac_t *mac)
 	}
 
 	if (is_vir_phy()) {
-		printf("Honey Bee ---->VIR PHY*\n");
+		debug("Honey Bee ---->VIR PHY*\n");
 
 		ath_reg_wr(ATH_ETH_CFG, ETH_CFG_ETH_RXDV_DELAY_SET(3) |
 					ETH_CFG_ETH_RXD_DELAY_SET(3)|
@@ -201,8 +201,8 @@ void ath_gmac_mii_setup(ath_gmac_mac_t *mac)
 		return;
 	}
 	if (is_s27()) {
-        	mgmt_cfg_val = 2;
-        	printf("Scorpion ---->S27 PHY*\n");
+		mgmt_cfg_val = 2;
+		debug("Scorpion ---->S27 PHY*\n");
 		ath_reg_wr(ETH_CFG_ADDRESS, ETH_CFG_MII_GE0_SET(1)|
                                         ETH_CFG_MII_GE0_SLAVE_SET(1));
 		udelay(1000);
@@ -247,7 +247,7 @@ static void ath_gmac_hw_start(ath_gmac_mac_t *mac)
 
 	ath_gmac_reg_wr(mac, ATH_MAC_FIFO_CFG_3, 0x1f00140);
 
-	printf(": cfg1 %#x cfg2 %#x\n", ath_gmac_reg_rd(mac, ATH_MAC_CFG1),
+	debug(": cfg1 %#x cfg2 %#x\n", ath_gmac_reg_rd(mac, ATH_MAC_CFG1),
 			ath_gmac_reg_rd(mac, ATH_MAC_CFG2));
 
 
@@ -432,7 +432,7 @@ static void ath_gmac_get_ethaddr(struct eth_device *dev)
 		return;
 	}
 	/* Use fixed address if the above address is invalid */
-	if (mac[0] != 0x00 || (mac[0] == 0xff && mac[5] == 0xff))
+	if ((mac[0] & 0x03) != 0x0)
 #else
 	if (1)
 #endif
@@ -445,7 +445,7 @@ static void ath_gmac_get_ethaddr(struct eth_device *dev)
 		mac[5] = 0xad;
 		printf("No valid address in Flash. Using fixed address\n");
 	} else {
-		printf("Fetching MAC Address from 0x%p\n", __func__, eeprom);
+		debug("Fetching MAC Address from 0x%p\n", eeprom);
 	}
 }
 
@@ -475,7 +475,7 @@ athr_mgmt_init(void)
 
 	ath_reg_wr(GPIO_OUT_FUNCTION4_ADDRESS, rddata);
 #endif
-	printf ("%s ::done\n",__func__);
+	debug ("%s ::done\n",__func__);
 }
 
 int ath_gmac_enet_initialize(bd_t * bis)
@@ -484,7 +484,7 @@ int ath_gmac_enet_initialize(bd_t * bis)
 	u32 mask, mac_h, mac_l;
 	int i;
 
-	printf("%s...\n", __func__);
+	debug("%s...\n", __func__);
 
 	/* Switch Analog and digital reset seq */
 	mask = ATH_RESET_GE1_PHY |  ATH_RESET_GE0_PHY;
@@ -536,7 +536,7 @@ int ath_gmac_enet_initialize(bd_t * bis)
 			mask = (ATH_RESET_GE0_MAC | ATH_RESET_GE1_MAC | ATH_RESET_GE0_MDIO | ATH_RESET_GE1_MDIO);
 
 
-			printf("%s: reset mask:%x \n", __func__, mask);
+			debug("%s: reset mask:%x \n", __func__, mask);
 
 			ath_reg_rmw_set(RST_RESET_ADDRESS, mask);
 			udelay(1000 * 100);
@@ -565,19 +565,19 @@ int ath_gmac_enet_initialize(bd_t * bis)
 
 		if (ath_gmac_macs[i]->mac_unit == 0) { /* WAN Phy */
 #ifdef  CFG_ATHRS27_PHY
-			printf("S27 reg init\n");
+			debug("S27 reg init\n");
 			athrs27_reg_init();
 			mask = ATH_RESET_GE0_MAC;
                         ath_reg_rmw_clear(RST_RESET_ADDRESS, mask);
 #endif
 
 #ifdef CONFIG_VIR_PHY
-			printf("VIRPhy reg init \n");
+			debug("VIRPhy reg init \n");
 			athr_vir_reg_init();
 #endif
 		} else {
 #ifdef  CFG_ATHRS27_PHY
-			printf("S27 reg init\n");
+			debug("S27 reg init\n");
 			athrs27_reg_init_lan();
 			mask = ATH_RESET_GE1_MAC;
                         ath_reg_rmw_clear(RST_RESET_ADDRESS, mask);
@@ -599,7 +599,7 @@ int ath_gmac_enet_initialize(bd_t * bis)
 		{
 			unsigned char *mac = dev[i]->enetaddr;
 
-			printf("%s: %02x:%02x:%02x:%02x:%02x:%02x\n", dev[i]->name,
+			debug("%s: %02x:%02x:%02x:%02x:%02x:%02x\n", dev[i]->name,
 					mac[0] & 0xff, mac[1] & 0xff, mac[2] & 0xff,
 					mac[3] & 0xff, mac[4] & 0xff, mac[5] & 0xff);
 		}
@@ -612,7 +612,7 @@ int ath_gmac_enet_initialize(bd_t * bis)
 
 
 	ath_gmac_phy_setup(ath_gmac_macs[i]->mac_unit);
-		printf("%s up\n",dev[i]->name);
+		debug("%s up\n",dev[i]->name);
 	}
 
 

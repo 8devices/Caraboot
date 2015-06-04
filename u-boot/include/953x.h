@@ -3085,6 +3085,7 @@
 #define RST_CLKGAT_EN_RESET                                          0x000002e2
 
 #define GPIO_OE_ADDRESS                                              0x18040000
+#define GPIO_IN_ADDRESS                                              0x18040004
 #define GPIO_OUT_ADDRESS                                             0x18040008
 #define GPIO_SPARE_ADDRESS                                           0x18040070
 
@@ -3487,7 +3488,7 @@
 
 #define CONFIG_MIPS32		1	/* MIPS32 CPU core	*/
 
-#define CONFIG_BOOTDELAY	2	/* autoboot after 4 seconds	*/
+#define CONFIG_BOOTDELAY	1	/* autoboot after 1 seconds	*/
 
 #define CONFIG_BAUDRATE		115200
 #define CFG_BAUDRATE_TABLE	{115200}
@@ -3549,6 +3550,7 @@
 #define CFG_DCACHE_SIZE		32768
 #define CFG_ICACHE_SIZE		65536
 #define CFG_CACHELINE_SIZE	32
+#define CONFIG_SYS_CACHELINE_SIZE	CFG_CACHELINE_SIZE
 
 /*
  * Address map

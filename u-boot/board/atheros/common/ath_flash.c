@@ -78,7 +78,7 @@ ath_spi_read_id(void)
 
 	rd = ath_reg_rd(ATH_SPI_RD_STATUS);
 
-	printf("Flash Manuf Id 0x%x, DeviceId0 0x%x, DeviceId1 0x%x\n",
+	debug("Flash Manuf Id 0x%x, DeviceId0 0x%x, DeviceId1 0x%x\n",
 		(rd >> 16) & 0xff, (rd >> 8) & 0xff, (rd >> 0) & 0xff);
 }
 
@@ -345,7 +345,7 @@ write_buff(flash_info_t *info, uchar *source, ulong addr, ulong len)
 		ext = 1;
 		ath_spi_enter_ext_addr(ATH_GET_EXT_4B(addr));
 		addr = ATH_GET_EXT_3BS(addr);
-	} else if (addr + len >= ATH_16M_FLASH_SIZE) {
+	} else if (addr + len > ATH_16M_FLASH_SIZE) {
 		printf("Write failed, cross 16M is forbidden\n");
 		return -1;
 	}
