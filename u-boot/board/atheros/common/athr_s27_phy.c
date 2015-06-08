@@ -253,7 +253,7 @@ int athrs27_reg_init_lan(void)
     athrs27_reg_write(0x0, athrs27_reg_read(0x0)|0x80000000);
 
     while(i--) {
-        sysMsDelay(100);
+        //sysMsDelay(100);
         if(!(athrs27_reg_read(0x0)&0x80000000))
             break;
     }
@@ -442,10 +442,10 @@ athrs27_phy_setup(int ethUnit)
      * After the phy is reset, it takes a little while before
      * it can respond properly.
      */
-    if (ethUnit == ENET_UNIT_LAN)
-        sysMsDelay(1000);
-    else
-        sysMsDelay(3000);
+    //if (ethUnit == ENET_UNIT_LAN)
+    //    sysMsDelay(1000);
+    //else
+    //    sysMsDelay(3000);
 
     /*
      * Wait up to 3 seconds for ALL associated PHYs to finish
@@ -476,7 +476,7 @@ athrs27_phy_setup(int ethUnit)
                 break;
             }
 
-            sysMsDelay(150);
+           // sysMsDelay(150);
         }
         /* extend the cable length */
         s27_wr_phy(phyUnit, ATHR_DEBUG_PORT_ADDRESS, 0x14);
