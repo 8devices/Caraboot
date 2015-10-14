@@ -100,7 +100,8 @@ int usbboot_scan(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	int i;
 	char part_id[8];
 	block_dev_desc_t *stor_dev = NULL;
-	disk_partition_t *info = NULL;
+	disk_partition_t disk_part_info;
+	disk_partition_t *info = &disk_part_info;
 	
 	char* boot_file_name; //Can include directories eg. "boot/vmlinux.uimage"
 	char* recovery_file_name;
@@ -150,9 +151,9 @@ int usbboot_scan(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		if (stor_dev->part_type != PART_TYPE_DOS)
 			continue;
 		for (i=1; i<=CFG_USB_BOOT_MAX_PARTITIONS_SCAN; i++){
-			printf("start %d size %d name %s\n", info->start, info->size, info->name);
-			printf("SCANNING device %d\n",i);
+			printf("SCAN partition %d\n",i);
 			if (get_partition_info_dos(stor_dev, i, info) == 0){
+				printf("Partition start %d size %d name %.32s\n", info->start, info->size, info->name);
 				sprintf(part_id,"%d:%d", devno, i);
 				usbboot_recovery(part_id, recovery_file_name);
 				usbboot_boot(part_id, boot_file_name);
