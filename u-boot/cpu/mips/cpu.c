@@ -93,6 +93,7 @@ int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 #else
 		ar7240_reg_wr(AR7240_RESET,
 			(AR7240_RESET_FULL_CHIP | AR7240_RESET_DDR));
+		udelay(10);
 #endif
 	}
 #endif
