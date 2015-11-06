@@ -138,10 +138,9 @@ struct us_data {
  * limited to 65535 blocks.
  */
 
-//some usb devices support only block count up to 0x7FFF (32767)
-//to avoid buffer misaligment use max count of 0x4000 (16384)
-#define USB_MAX_XFER_BLK	16384
-//#define USB_MAX_XFER_BLK	65535
+//some usb devices support only block count up to 0x2FFF
+//set max block count to 0x800 just to be safe
+#define USB_MAX_XFER_BLK	0x800
 #else
 #define USB_MAX_XFER_BLK	20
 #endif
