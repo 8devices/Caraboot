@@ -19,23 +19,27 @@ export MAKECMD=make ARCH=mips
 export UBOOT_GCC_4_3_3_EXTRA_CFLAGS=-fPIC
 export BUILD_TYPE=squashfs
 
-####
-BOARD_TYPE=lima
-export ETH_CONFIG=_s27
-####
-
 export COMPRESSED_UBOOT=0
 export FLASH_SIZE=16
 export NEW_DDR_TAP_CAL=1
 export CONFIG_HORNET_XTAL=40
 export CONFIG_HORNET_1_1_WAR=1
 export CARABOOT_RELEASE=v2.4-dev
+ifeq ($(BOARD_TYPE),lima)
+	export ETH_CONFIG=_s27
+endif
 
 IMAGEPATH=$(BUILD_TOPDIR)/bin
 UBOOT_BINARY=u-boot.bin
 UBOOTFILE=$(BOARD_TYPE)_u-boot.bin
 
+TARGETS=lima carambola2
+
 all:
+ifeq (,$(filter $(BOARD_TYPE), $(TARGETS)))
+	@echo "Run 'make BOARD_TYPE=<target_name>'"
+	@echo "Available targets: $(TARGETS)"
+else
 	cd $(UBOOTDIR) && $(MAKECMD) distclean
 	cd $(UBOOTDIR) && $(MAKECMD) $(BOARD_TYPE)_config
 	cd $(UBOOTDIR) && $(MAKECMD) all
@@ -44,6 +48,7 @@ all:
 	cp -f $(UBOOTDIR)/$(UBOOT_BINARY) $(IMAGEPATH)/$(UBOOTFILE)
 
 	@echo Done
+endif
 	
 clean:
 	cd $(UBOOTDIR) && $(MAKECMD) distclean
