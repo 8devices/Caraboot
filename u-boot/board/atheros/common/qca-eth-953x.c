@@ -171,7 +171,9 @@ void ath_gmac_mii_setup(ath_gmac_mac_t *mac)
 		debug("Honey Bee ---->  MAC 1 S27 PHY *\n");
 		ath_reg_wr(ATH_ETH_CFG, ETH_CFG_ETH_RXDV_DELAY_SET(3) |
 					ETH_CFG_ETH_RXD_DELAY_SET(3)|
-					ETH_CFG_RGMII_GE0_SET(1));
+					ETH_CFG_RGMII_GE0_SET(1)|
+					ATH_ETH_CFG_SW_PHY_SWAP|
+					ATH_ETH_CFG_SW_PHY_ADDR_SWAP);
 
 		ath_reg_wr(ETH_XMII_ADDRESS, ETH_XMII_TX_INVERT_SET(1) |
 						ETH_XMII_RX_DELAY_SET(2) |
@@ -204,7 +206,9 @@ void ath_gmac_mii_setup(ath_gmac_mac_t *mac)
 		mgmt_cfg_val = 2;
 		debug("Scorpion ---->S27 PHY*\n");
 		ath_reg_wr(ETH_CFG_ADDRESS, ETH_CFG_MII_GE0_SET(1)|
-                                        ETH_CFG_MII_GE0_SLAVE_SET(1));
+                                        ETH_CFG_MII_GE0_SLAVE_SET(1)|
+					ATH_ETH_CFG_SW_PHY_SWAP|
+					ATH_ETH_CFG_SW_PHY_ADDR_SWAP);
 		udelay(1000);
 		ath_gmac_reg_wr(mac, ATH_MAC_MII_MGMT_CFG, mgmt_cfg_val | (1 << 31));
 		ath_gmac_reg_wr(mac, ATH_MAC_MII_MGMT_CFG, mgmt_cfg_val);

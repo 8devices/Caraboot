@@ -84,7 +84,7 @@ static athrPhyInfo_t athrPhyInfo[] = {
 
     {TRUE,   /* port 1 -- LAN port 1 */
      FALSE,
-     ENET_UNIT_LAN,
+     ENET_UNIT_WAN,
      0,
      ATHR_PHY0_ADDR,
      ATHR_LAN_PORT_VLAN
@@ -136,7 +136,7 @@ static athrPhyInfo_t athrPhyInfo[] = {
 
 #define ATHR_GLOBALREGBASE    0
 
-#define ATHR_PHY_MAX 5
+#define ATHR_PHY_MAX 2
 
 /* Range of valid PHY IDs is [MIN..MAX] */
 #define ATHR_ID_MIN 0
