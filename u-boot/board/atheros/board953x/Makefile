@@ -24,7 +24,8 @@ OBJS	=			\
 	../common/init-953x.o	\
 	../common/serial.o	\
 	../common/ath_pci.o	\
-	../common/qca-eth-953x.o
+	../common/qca-eth-953x.o \
+	../common/qca_sf.o
 
 
 #

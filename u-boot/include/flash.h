@@ -455,6 +455,29 @@ extern void flash_read_factory_serial(flash_info_t * info, void * buffer, int of
 #define FLASH_ERASE_TIMEOUT	120000	/* timeout for erasing in ms		*/
 #define FLASH_WRITE_TIMEOUT	500	/* timeout for writes  in ms		*/
 
+
+/* Basic SPI FLASH commands */
+#define SPI_FLASH_CMD_WRSR		0x01
+#define SPI_FLASH_CMD_PP		0x02
+#define SPI_FLASH_CMD_READ		0x03
+#define SPI_FLASH_CMD_WRDI		0x04
+#define SPI_FLASH_CMD_RDSR		0x05
+#define SPI_FLASH_CMD_WREN		0x06
+
+/* SPI FLASH erase related commands */
+#define SPI_FLASH_CMD_ES_4KB	0x20
+#define SPI_FLASH_CMD_ES_32KB	0x52
+#define SPI_FLASH_CMD_ES_64KB	0xD8
+#define SPI_FLASH_CMD_ES_ALL	0xC7
+
+/* Other SPI FLASH commands */
+#define SPI_FLASH_CMD_JEDEC		0x9F
+#define SPI_FLASH_CMD_SFDP		0x5A
+
+/* SFDP related defines */
+#define SPI_FLASH_SFDP_SIGN		0x50444653
+
+
 #endif /* !CFG_NO_FLASH */
 
 #endif /* _FLASH_H_ */
