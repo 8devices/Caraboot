@@ -289,6 +289,9 @@ lima_config		:	unconfig
 	@echo '#define CFG_ATHRS27_PHY 1' >>include/config.h
 	@echo '#define CFG_ATH_GMAC_NMACS 2' >>include/config.h
 	@echo '#define BOARD_NAME "$(CFG_BOARD_NAME)"' >>include/config.h
+ifeq ($(RAM_BOOT),1)
+	@echo '#define CONFIG_SKIP_LOWLEVEL_INIT' >>include/config.h
+endif
 
 ifdef FLASH_SIZE
 	@echo "#define FLASH_SIZE $(FLASH_SIZE)" >>include/config.h

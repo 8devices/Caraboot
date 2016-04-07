@@ -191,11 +191,12 @@ ath_mem_config(void)
 	extern uint32_t *ath_ddr_tap_cal(void);
 
 #if !defined(CONFIG_ATH_EMULATION)
+#if !defined(CONFIG_SKIP_LOWLEVEL_INIT)
 	type = ath_ddr_initial_config(CFG_DDR_REFRESH_VAL);
 
 	tap = ath_ddr_tap_cal();
 	prmsg("tap = 0x%p\n", tap);
-
+#endif
 	tap = (uint32_t *)0xbd001f10;
 	prmsg("Tap (low, high) = (0x%x, 0x%x)\n", tap[0], tap[1]);
 

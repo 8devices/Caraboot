@@ -387,10 +387,12 @@ normal_path:
 	/* Initialize any external memory.
 	 */
 #if defined(CONFIG_AR7100) || defined(CONFIG_AR7240) || defined(CONFIG_ATHEROS)
+#if !defined(CONFIG_SKIP_LOWLEVEL_INIT)
 	la      t9, lowlevel_init
 	jalr    t9
 	nop
 	nop
+#endif
 
 #if defined(CONFIG_MACH_HORNET)
 	la      t9, hornet_ddr_init

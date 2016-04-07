@@ -28,7 +28,9 @@ endif #}
 
 # RAM version
 # TEXT_BASE = 0x83fc0000
-# TEXT_BASE = 0x80100000
+ifeq ($(RAM_BOOT),1)
+TEXT_BASE = 0x80100000
+endif
 
 export BOARD_EXTRA_OBJS_tmp =
 
