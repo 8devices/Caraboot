@@ -35,18 +35,13 @@ typedef struct {
 	ulong	flash_id;		/* combined device & manufacturer code	*/
 	ulong	start[CFG_MAX_FLASH_SECT];   /* physical sector start addresses */
 	uchar	protect[CFG_MAX_FLASH_SECT]; /* sector protection status	*/
-#ifdef CFG_FLASH_CFI
-	uchar	portwidth;		/* the width of the port		*/
-	uchar	chipwidth;		/* the width of the chip		*/
-	ushort	buffer_size;		/* # of bytes in write buffer		*/
-	ulong	erase_blk_tout;		/* maximum block erase timeout		*/
-	ulong	write_tout;		/* maximum write timeout		*/
-	ulong	buffer_write_tout;	/* maximum buffer write timeout		*/
-	ushort	vendor;			/* the primary vendor id		*/
-	ushort	cmd_reset;		/* Vendor specific reset command	*/
-	ushort	interface;		/* used for x8/x16 adjustments		*/
-	ushort	legacy_unlock;		/* support Intel legacy (un)locking	*/
-#endif
+	u32 sector_size;
+	u32 bank;
+	u16 page_size;
+	u8  use_4byte_addr;
+	u8  erase_cmd;
+	u8  read_cmd;
+	u8  page_program_cmd;
 } flash_info_t;
 
 /*
@@ -463,6 +458,11 @@ extern void flash_read_factory_serial(flash_info_t * info, void * buffer, int of
 #define SPI_FLASH_CMD_WRDI		0x04
 #define SPI_FLASH_CMD_RDSR		0x05
 #define SPI_FLASH_CMD_WREN		0x06
+/* 4-byte commands */
+#define SPI_FLASH_CMD_4READ		0x13
+#define SPI_FLASH_CMD_4PP		0x12
+#define SPI_FLASH_CMD_4SE		0xDC
+
 
 /* SPI FLASH erase related commands */
 #define SPI_FLASH_CMD_ES_4KB	0x20

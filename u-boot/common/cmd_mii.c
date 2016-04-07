@@ -779,9 +779,10 @@ int do_mac (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 
 int do_mac (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
-	char    sectorBuff[CFG_FLASH_SECTOR_SIZE];
 	int     serno;
 	int     product_id;
+	int     cal_sector;
+	char    *sectorBuff;
 
 	/*
 	 * Argv[1] contains the value string.  Convert to binary, and
@@ -822,8 +823,13 @@ int do_mac (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 	 * Get the values from flash, and program into the MAC address
 	 * registers
 	 */
+	sectorBuff = malloc(flash_info->sector_size);
+	if (sectorBuff == NULL) {
+		printf("Out of memory\n");
+		return 1;
+	}
 
-	memcpy(sectorBuff,(void *)BOARDCAL, CFG_FLASH_SECTOR_SIZE);
+	memcpy(sectorBuff,(void *)BOARDCAL, flash_info->sector_size);
 
 	/*
 	 * Set the first and second values
@@ -847,8 +853,10 @@ int do_mac (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 	sectorBuff[10] = 0xFF & (serno >> 8);
 	sectorBuff[11] = 0xFF &  serno;
 
-	flash_erase(flash_info,CAL_SECTOR,CAL_SECTOR);
-	write_buff(flash_info,sectorBuff, BOARDCAL, CFG_FLASH_SECTOR_SIZE);
+	cal_sector = (BOARDCAL - CFG_FLASH_BASE) / flash_info->sector_size;
+	flash_erase(flash_info, cal_sector, cal_sector);
+	write_buff(flash_info, sectorBuff, BOARDCAL, flash_info->sector_size);
+	free(sectorBuff);
 
 	return 0;
 }

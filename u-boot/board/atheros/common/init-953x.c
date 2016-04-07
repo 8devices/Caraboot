@@ -167,7 +167,6 @@ ath_ddr_initial_config(uint32_t refresh)
 #if !defined(CONFIG_ATH_EMULATION)
 	int		ddr_config, ddr_config2, ddr_config3, ext_mod, mod_val,
 			mod_val_init, cycle_val, tap_val, type, ctl_config;
-	uint32_t	*pll = (unsigned *)PLL_CONFIG_VAL_F;
 	uint32_t	bootstrap,revid;
 
 	prmsg("\nsri\n");

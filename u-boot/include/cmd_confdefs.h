@@ -94,7 +94,8 @@
 #define CFG_CMD_UNIVERSE 0x0800000000000000ULL	/* Tundra Universe Support      */
 #define CFG_CMD_EXT2	0x1000000000000000ULL	/* EXT2 Support			*/
 #define CFG_CMD_SNTP	0x2000000000000000ULL	/* SNTP support			*/
-#define CFG_CMD_DISPLAY	0x4000000000000000ULL	/* Display support		*/
+//#define CFG_CMD_DISPLAY	0x4000000000000000ULL	/* Display support		*/
+#define CFG_CMD_SF	0x4000000000000000ULL	/* SPI flash		*/
 #define CFG_CMD_ETHREG	0x8000000000000000ULL	/* S26 Reg RD/WR utility	*/
 
 
@@ -114,7 +115,6 @@
 			CFG_CMD_DATE	| \
 			CFG_CMD_DHCP	| \
 			CFG_CMD_DIAG	| \
-			CFG_CMD_DISPLAY	| \
 			CFG_CMD_DOC	| \
 			CFG_CMD_DTT	| \
 			CFG_CMD_EEPROM	| \
@@ -141,6 +141,7 @@
 			CFG_CMD_SAVES	| \
 			CFG_CMD_SCSI	| \
 			CFG_CMD_SDRAM	| \
+			CFG_CMD_SF	| \
 			CFG_CMD_SNTP	| \
 			CFG_CMD_SPI	| \
 			CFG_CMD_UNIVERSE | \
@@ -162,7 +163,6 @@
 			CFG_CMD_DATE	| \
 			CFG_CMD_DHCP	| \
 			CFG_CMD_DIAG	| \
-			CFG_CMD_DISPLAY	| \
 			CFG_CMD_DOC	| \
 			CFG_CMD_DTT	| \
 			CFG_CMD_ECHO	| \
@@ -199,6 +199,7 @@
 			CFG_CMD_SCSI	| \
 			CFG_CMD_SETGETDCR	|\
 			CFG_CMD_SDRAM	| \
+			CFG_CMD_SF	| \
 			CFG_CMD_SNTP	| \
 			CFG_CMD_SPI	| \
 			CFG_CMD_UNIVERSE	 | \

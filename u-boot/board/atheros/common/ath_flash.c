@@ -248,35 +248,22 @@ ath_spi_flash_print_info(flash_info_t *info)
 int
 flash_erase(flash_info_t *info, int s_first, int s_last)
 {
+	int i;
 	u32 addr;
-	int ext = 0;
-	int i, sector_size = info->size / info->sector_count;
+	int sector_size = info->size / info->sector_count;
 
 	printf("\nFirst %#x last %#x sector size %#x\n",
 		s_first, s_last, sector_size);
 
-	addr = s_first * sector_size;
-	if (addr >= ATH_16M_FLASH_SIZE) {
-		ext = 1;
-		ath_spi_enter_ext_addr(ATH_GET_EXT_4B(addr));
-	} else if (s_last * sector_size >= ATH_16M_FLASH_SIZE) {
-		printf("Erase failed, cross 16M is forbidden\n");
-		return -1;
-	}
-
 	for (i = s_first; i <= s_last; i++) {
 		addr = i * sector_size;
-
-		if (ext)
-			addr = ATH_GET_EXT_3BS(addr);
-
 		printf("\b\b\b\b%4d", i);
 		ath_spi_sector_erase(addr);
 	}
-
 	ath_spi_exit_ext_addr(ext);
 
 	ath_spi_done();
+
 	printf("\n");
 
 	return 0;
@@ -287,49 +274,6 @@ flash_erase(flash_info_t *info, int s_first, int s_last)
  * 0. Assumption: Caller has already erased the appropriate sectors.
  * 1. call page programming for every 256 bytes
  */
-#ifdef ATH_SST_FLASH
-void
-ath_spi_flash_chip_erase(void)
-{
-	ath_spi_write_enable();
-	ath_spi_bit_banger(ATH_SPI_CMD_CHIP_ERASE);
-	ath_spi_go();
-	ath_spi_poll();
-}
-
-int
-write_buff(flash_info_t *info, uchar *src, ulong dst, ulong len)
-{
-	uint32_t val;
-
-	dst = dst - CFG_FLASH_BASE;
-	printf("write len: %lu dst: 0x%x src: %p\n", len, dst, src);
-
-	for (; len; len--, dst++, src++) {
-		ath_spi_write_enable();	// dont move this above 'for'
-		ath_spi_bit_banger(ATH_SPI_CMD_PAGE_PROG);
-		ath_spi_send_addr(dst);
-
-		val = *src & 0xff;
-		ath_spi_bit_banger(val);
-
-		ath_spi_go();
-		ath_spi_poll();
-	}
-	/*
-	 * Disable the Function Select
-	 * Without this we can't read from the chip again
-	 */
-	ath_reg_wr(ATH_SPI_FS, 0);
-
-	if (len) {
-		// how to differentiate errors ??
-		return ERR_PROG_ERROR;
-	} else {
-		return ERR_OK;
-	}
-}
-#else
 int
 write_buff(flash_info_t *info, uchar *source, ulong addr, ulong len)
 {
@@ -368,7 +312,6 @@ write_buff(flash_info_t *info, uchar *source, ulong addr, ulong len)
 
 	return 0;
 }
-#endif
 
 static void
 ath_spi_write_enable()

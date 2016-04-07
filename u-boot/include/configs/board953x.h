@@ -23,47 +23,15 @@
 
 #include <atheros.h>
 
-#ifndef FLASH_SIZE
-#define FLASH_SIZE 8
-#endif
-
-#if (FLASH_SIZE > 16)
-#define ATH_DUAL_NOR		1
-#endif
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
  */
-#define CFG_MAX_FLASH_BANKS	1	/* max number of memory banks */
-#if (FLASH_SIZE == 32)
-#define CFG_MAX_FLASH_SECT	512	/* max number of sectors on one chip */
-#elif (FLASH_SIZE == 16)
-#define CFG_MAX_FLASH_SECT	256	/* max number of sectors on one chip */
-#endif
-
-#define CFG_FLASH_SECTOR_SIZE	(64*1024)
-#if (FLASH_SIZE == 32)
-#define CFG_FLASH_SIZE		0x02000000	/* Total flash size */
-#elif (FLASH_SIZE == 16)
-#define CFG_FLASH_SIZE		0x01000000	/* Total flash size */
-#elif (FLASH_SIZE == 8)
-#define CFG_FLASH_SIZE		0x00800000	/* max number of sectors on one chip */
-#elif (FLASH_SIZE == 1/2)
-#define CFG_FLASH_SIZE		0x00080000	/* Total flash size */
-#else
-#define CFG_FLASH_SIZE		0x00400000	/* Total flash size */
-#endif
-
-#ifndef COMPRESSED_UBOOT
-#define ENABLE_DYNAMIC_CONF	1
-#endif
+#define CFG_MAX_FLASH_BANKS		1	/* max number of memory banks */
+#define CFG_MAX_FLASH_SECT		1024	/* max number of sectors on one chip */
+#define CFG_DEFAULT_FLASH_SECTOR_SIZE	(64*1024)
+#define CFG_DEFAULT_FLASH_SIZE		0x01000000	/* Total flash size */
 
 #undef CFG_ATHRS26_PHY
-
-#if (CFG_MAX_FLASH_SECT * CFG_FLASH_SECTOR_SIZE) != CFG_FLASH_SIZE
-#	error "Invalid flash configuration"
-#endif
-
-#define CFG_FLASH_WORD_SIZE	unsigned short
 
 #if defined(CONFIG_ATH_NAND_BR) && defined(COMPRESSED_UBOOT)
 #define CFG_FLASH_BASE			0xa0100000
@@ -78,23 +46,6 @@
 #endif
 
 #define CONFIG_PCI_CONFIG_DATA_IN_OTP
-
-/*
- * Defines to change flash size on reboot
- */
-#ifdef ENABLE_DYNAMIC_CONF
-#define UBOOT_FLASH_SIZE		(256 * 1024)
-#define UBOOT_ENV_SEC_START		(CFG_FLASH_BASE + UBOOT_FLASH_SIZE)
-
-#define CFG_FLASH_MAGIC			0xaabacada
-#define CFG_FLASH_MAGIC_F		(UBOOT_ENV_SEC_START + CFG_FLASH_SECTOR_SIZE - 0x20)
-#define CFG_FLASH_SECTOR_SIZE_F		*(volatile int *)(CFG_FLASH_MAGIC_F + 0x4)
-#define CFG_FLASH_SIZE_F		*(volatile int *)(CFG_FLASH_MAGIC_F + 0x8) /* Total flash size */
-#define CFG_MAX_FLASH_SECT_F		(CFG_FLASH_SIZE / CFG_FLASH_SECTOR_SIZE) /* max number of sectors on one chip */
-#else
-#define CFG_FLASH_SIZE_F		CFG_FLASH_SIZE
-#define CFG_FLASH_SECTOR_SIZE_F		CFG_FLASH_SECTOR_SIZE
-#endif
 
 
 #define CFG_DDR_REFRESH_VAL		0x4138
@@ -123,15 +74,8 @@
 
 
 #define CFG_ENV_ADDR		0x9f040000
-#define CONFIG_BOOTCOMMAND	"bootm 0x9f060000"
+#define CONFIG_BOOTCOMMAND	"bootm 0x9f0c0000"
 
-#ifdef ENABLE_DYNAMIC_CONF
-#define CFG_DDR_MAGIC		0xaabacada
-#define CFG_DDR_MAGIC_F		(UBOOT_ENV_SEC_START + CFG_FLASH_SECTOR_SIZE - 0x30)
-#define CFG_DDR_CONFIG_VAL_F	*(volatile int *)(CFG_DDR_MAGIC_F + 4)
-#define CFG_DDR_CONFIG2_VAL_F	*(volatile int *)(CFG_DDR_MAGIC_F + 8)
-#define CFG_DDR_EXT_MODE_VAL_F	*(volatile int *)(CFG_DDR_MAGIC_F + 12)
-#endif
 
 #define CONFIG_NET_MULTI
 #define CONFIG_MEMSIZE_IN_BYTES
@@ -156,7 +100,8 @@
 				CFG_CMD_RUN	|	\
 				CFG_CMD_ELF	|	\
 				CFG_CMD_DDR	|	\
-				CFG_CMD_ETHREG		\
+				CFG_CMD_ETHREG	|	\
+				CFG_CMD_SF		\
 				) & ~(			\
 				CFG_CMD_FLASH		\
 				))
@@ -175,24 +120,12 @@
 #	endif
 #endif /* #ifndef COMPRESSED_UBOOT */
 
-#ifdef CONFIG_ATH_NAND_SUPPORT
-#	ifdef CONFIG_ATH_NAND_BR
-#		define CFG_ENV_IS_IN_NAND	1
-#		define CFG_ENV_OFFSET		0x40000u
-#		define CFG_ENV_SIZE		0x40000u
-#		define ATH_EXTRA_CMD		CFG_CMD_NAND
-#	else
-#		define CFG_ENV_IS_IN_FLASH	1
-#		define CFG_ENV_SIZE		CFG_FLASH_SECTOR_SIZE
-#		define ATH_EXTRA_CMD		(CFG_CMD_NAND | CFG_CMD_FLASH)
-#	endif
-#	define NAND_MAX_CHIPS			1
-#	define CFG_MAX_NAND_DEVICE		1
-#else
-#	define ATH_EXTRA_CMD			CFG_CMD_FLASH
-#	define CFG_ENV_IS_IN_FLASH		1
-#	define CFG_ENV_SIZE			CFG_FLASH_SECTOR_SIZE
-#endif
+
+
+#define ATH_EXTRA_CMD			CFG_CMD_FLASH
+#define CFG_ENV_IS_IN_FLASH		1
+#define CFG_ENV_SIZE			(256*1024)
+
 
 #undef DEBUG
 
@@ -228,10 +161,10 @@
 ** NOTE: **This will change with different flash configurations**
 */
 
-#define WLANCAL				0x9f051000
-#define BOARDCAL			0x9f050000
+#define WLANCAL				0x9f081000
+#define BOARDCAL			0x9f080000
 #define ATHEROS_PRODUCT_ID		137
-#define CAL_SECTOR			(CFG_MAX_FLASH_SECT - 1)
+
 
 #define CONFIG_FACTORY_MODE
 #define CFG_FACTORY_IMG_LOAD_ADDR		"0x80F00000"
@@ -258,10 +191,10 @@
 #define CFG_USB_BOOT_MAX_PARTITIONS_SCAN 	16
 #define CFG_USB_BOOT_LOAD_ADDR 			0x82000000   /* starts at upper half of RAM */
 #define CFG_MAX_USB_BOOT_FILE_SIZE 		30*1024*1024 /* 30MB */
-#define CFG_MAX_USB_RECOVERY_FILE_SIZE 		0xFA0000 /* 15.625MB */
+#define CFG_MAX_USB_RECOVERY_FILE_SIZE 		0xF40000 /* 15.25MB */
 #define CFG_USB_BOOT_FILENAME 			"8dev_uimage.bin"
 #define CFG_USB_RECOVERY_FILENAME 		"8dev_recovery.bin"
-#define CFG_USB_RECOVERY_FW_START_IN_FLASH 	"0x9f060000"
+#define CFG_USB_RECOVERY_FW_START_IN_FLASH 	"0x9f0c0000"
 #define CFG_USB_BOOT_BUTTON_ID			0
 
 #define CONFIG_AUTOBOOT_KEYED
@@ -273,6 +206,8 @@
 	28800, 38400, 56000, 57600, 115200, 128000, 230400, 250000, 256000 }
 
 #define CONFIG_GPIOLIB
+
+#define CFG_64BIT_STRTOUL
 
 /* For Merlin, both PCI, PCI-E interfaces are valid */
 #define ATH_ART_PCICFG_OFFSET		12

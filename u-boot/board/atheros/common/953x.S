@@ -88,21 +88,6 @@ lowlevel_init:
 	li	t4,	CPU_PLL_DITHER_VAL
 	li	t3,	DDR_PLL_DITHER_VAL
 
-	li	t7,	PLL_CONFIG_VAL_F
-	lw	t8,	0(t7)
-	li	t7,	PLL_MAGIC
-	beq	t7,	t8,	read_from_flash
-	nop
-	j	pll_bypass_set
-	nop
-read_from_flash:
-	li	t7,	PLL_CONFIG_VAL_F + 4
-	lw	t5,	0(t7)
-	lw	t4,	4(t7)
-	lw	t6,	8(t7)
-	lw	t3,	12(t7)
-
-
 pll_bypass_set:
 	cpu_ddr_control_set (CPU_DDR_CLOCK_CONTROL_CPU_PLL_BYPASS_MASK, CPU_DDR_CLOCK_CONTROL_CPU_PLL_BYPASS_SET(1));
 	cpu_ddr_control_set (CPU_DDR_CLOCK_CONTROL_DDR_PLL_BYPASS_MASK, CPU_DDR_CLOCK_CONTROL_DDR_PLL_BYPASS_SET(1));

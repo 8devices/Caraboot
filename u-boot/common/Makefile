@@ -31,7 +31,7 @@ ifeq ($(COMPRESSED_UBOOT),1)
 COBJS	= main.o circbuf.o \
 	  cmd_boot.o cmd_bootm.o \
 	  cmd_cache.o cmd_console.o \
-	  cmd_date.o cmd_dcr.o cmd_display.o \
+	  cmd_date.o cmd_dcr.o \
 	  cmd_eeprom.o \
 	  cmd_flash.o \
 	  cmd_immap.o cmd_itest.o \
@@ -51,7 +51,7 @@ COBJS	= main.o circbuf.o \
 	  cmd_autoscript.o \
 	  cmd_bdinfo.o cmd_boot.o cmd_bootm.o \
 	  cmd_cache.o cmd_console.o \
-	  cmd_date.o cmd_diag.o cmd_display.o \
+	  cmd_date.o cmd_diag.o \
 	  cmd_eeprom.o cmd_elf.o cmd_ext2.o \
 	  cmd_fat.o cmd_fdc.o cmd_fdos.o cmd_flash.o \
 	  cmd_i2c.o cmd_ide.o cmd_immap.o cmd_itest.o \
@@ -71,7 +71,8 @@ COBJS	= main.o circbuf.o \
 	  s_record.o serial.o soft_i2c.o soft_spi.o \
 	  usb.o usb_hub.o usb_storage.o usb_boot.o \
 	  factory.o \
-	  crc16.o xyzModem.o
+	  crc16.o xyzModem.o \
+	  cmd_sf.o
 endif
 
 ifndef BOOT_FROM_NAND

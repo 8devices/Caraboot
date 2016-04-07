@@ -2,6 +2,7 @@
  * Qualcomm/Atheros Serial SPI FLASH driver utilizing SHIFT registers
  *
  * Copyright (C) 2015 Piotr Dymacz <piotr@dymacz.pl>
+ * Copyright (C) 2016 Mantas Pucka <mantas@8devices.com>
  *
  * SPDX-License-Identifier:GPL-2.0
  */
@@ -96,6 +97,19 @@ static void qca_sf_bank_to_cs_mask(u32 bank)
 	}
 }
 
+void qca_sf_prepare_cmd(u8 cmd, u32 addr, u32 is_4byte, u32 buf[2])
+{
+	if (is_4byte) {
+		buf[0] = cmd << 24;
+		buf[0] = buf[0] | (addr >> 8);
+		buf[1] = (addr & 0x000000FF);
+	}
+	else {
+		buf[0] = cmd << 24;
+		buf[0] = buf[0] | (addr & 0x00FFFFFF);
+	}
+}
+
 /* Poll status register and wait till busy bit is cleared */
 static void qca_sf_busy_wait(void)
 {
@@ -125,18 +139,28 @@ void qca_sf_bulk_erase(u32 bank)
 }
 
 /* Erase one sector at provided address */
-u32 qca_sf_sect_erase(u32 bank, u32 address, u32 sect_size, u8 erase_cmd)
+u32 qca_sf_sect_erase(flash_info_t *info, u32 address)
 {
-	u32 data_out;
+	u32 data_out[2];
+	int use_4byte_addr = 0;
+	qca_sf_bank_to_cs_mask(info->bank);
 
-	qca_sf_bank_to_cs_mask(bank);
+	if (address >= 0x1000000 && info->use_4byte_addr == 0) {
+		return -1;
+	}
 
-	/* TODO: 4-byte addressing support */
-	data_out = (erase_cmd << 24) | (address & 0x00FFFFFF);
+	qca_sf_prepare_cmd(info->erase_cmd, address, info->use_4byte_addr, data_out);
 
 	qca_sf_spi_en();
 	qca_sf_write_en();
-	qca_sf_shift_out(data_out, 32, 1);
+	if (info->use_4byte_addr) {
+		qca_sf_shift_out(data_out[0], 32, 0);
+		qca_sf_shift_out(data_out[1], 8, 1);
+	}
+	else {
+		qca_sf_shift_out(data_out[0], 32, 1);
+	}
+
 	qca_sf_busy_wait();
 	qca_sf_spi_di();
 
@@ -144,18 +168,27 @@ u32 qca_sf_sect_erase(u32 bank, u32 address, u32 sect_size, u8 erase_cmd)
 }
 
 /* Writes 'length' bytes at 'address' using page program command */
-void qca_sf_write_page(u32 bank, u32 address, u32 length, u8 *data)
+void qca_sf_write_page(flash_info_t *info, u32 bank, u32 address, u32 length, u8 *data)
 {
-	u32 data_out, i;
+	int i;
+	u32 data_out[2];
 
 	qca_sf_bank_to_cs_mask(bank);
 
-	data_out = SPI_FLASH_CMD_PP << 24;
-	data_out = data_out | (address & 0x00FFFFFF);
+	if (address >= 0x1000000 && info->use_4byte_addr == 0) {
+		return;
+	}
+
+	/* assemble write command */
+	qca_sf_prepare_cmd(info->page_program_cmd, address, info->use_4byte_addr, data_out);
 
 	qca_sf_spi_en();
 	qca_sf_write_en();
-	qca_sf_shift_out(data_out, 32, 0);
+
+	qca_sf_shift_out(data_out[0], 32, 0);
+	if (info->use_4byte_addr){
+		qca_sf_shift_out(data_out[1], 8, 0);
+	}
 
 	length--;
 	for (i = 0; i < length; i++) {
@@ -167,6 +200,39 @@ void qca_sf_write_page(u32 bank, u32 address, u32 length, u8 *data)
 
 	qca_sf_busy_wait();
 	qca_sf_spi_di();
+}
+
+/* Reads 'length' bytes at 'address' to 'data' using read command */
+int qca_sf_read(flash_info_t *info, u32 bank, u32 address, u32 length, u8 *data)
+{
+	int i;
+	u32 data_out[2];
+
+	if (address >= 0x1000000 && info->use_4byte_addr == 0)
+		return -1;
+
+	/* assemble read command */
+	qca_sf_prepare_cmd(info->read_cmd, address, info->use_4byte_addr, data_out);
+
+	qca_sf_spi_en();
+	qca_sf_shift_out(data_out[0], 32, 0);
+	if (info->use_4byte_addr){
+		qca_sf_shift_out(data_out[1], 8, 0);
+	}
+
+	/* read data */
+	length--;
+	for (i = 0; i < length; i++) {
+		qca_sf_shift_out(0, 8, 0);
+		*(data + i) = qca_sf_shift_in();
+	}
+
+	qca_sf_shift_out(0, 8, 1);
+	*(data + i) = qca_sf_shift_in();
+
+	qca_sf_spi_di();
+
+	return 0;
 }
 
 /*
@@ -277,4 +343,48 @@ u32 qca_sf_jedec_id(u32 bank)
 	qca_sf_spi_di();
 
 	return (data_in & 0x00FFFFFF);
+}
+
+int
+qca_sf_flash_erase(flash_info_t *info, u32 address, u32 length, u8 *buf)
+{
+	int ret;
+	int sector_size = info->size / info->sector_count;
+
+	if (address % sector_size || length % sector_size) {
+		debug("SF: Erase offset/length not multiple of erase size\n");
+		return -1;
+	}
+
+	while (length) {
+		ret = qca_sf_sect_erase(info, address);
+
+		if (ret) {
+			printf("SF: erase failed\n");
+			break;
+		}
+		address += sector_size;
+		length -= sector_size;
+	}
+
+	return ret;
+}
+
+int qca_sf_write_buf(flash_info_t *info, u32 bank, u32 address, u32 length, u8 *buf)
+{
+	u8 *src;
+	u32 dst;
+	int total = 0;
+	int len_this_lp, bytes_this_page;
+
+	while (total < length) {
+		src = buf + total;
+		dst = address + total;
+		bytes_this_page = ATH_SPI_PAGE_SIZE - (address % ATH_SPI_PAGE_SIZE);
+		len_this_lp = ((length - total) > bytes_this_page) ? bytes_this_page : (length - total);
+		qca_sf_write_page(info, 0, dst, len_this_lp, src);
+		total += len_this_lp;
+	}
+
+	return 0;
 }

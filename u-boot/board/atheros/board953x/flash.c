@@ -27,21 +27,45 @@ unsigned long
 flash_get_geom (flash_info_t *flash_info)
 {
 	int i;
+	int ret;
+	u32 flash_size, sect_size;
+	u8 erase_cmd;
 
-	/* XXX this is hardcoded until we figure out how to read flash id */
+	ret = qca_sf_sfdp_info(0, &flash_size, &sect_size, &erase_cmd);
+	flash_info->use_4byte_addr = 0;
+	flash_info->read_cmd = SPI_FLASH_CMD_READ;
+	flash_info->page_program_cmd = SPI_FLASH_CMD_PP;
 
-	flash_info->flash_id = FLASH_M25P64;
-	flash_info->size = CFG_FLASH_SIZE; /* bytes */
-	flash_info->sector_count = flash_info->size / CFG_FLASH_SECTOR_SIZE;
+	if (ret == 0) {
+		flash_info->flash_id = FLASH_M25P64;
+		flash_info->size = flash_size; /* bytes */
+		flash_info->sector_size = sect_size;
+		flash_info->sector_count = flash_size / sect_size;
+		flash_info->erase_cmd = erase_cmd;
+		if (flash_info->size > 16*1024*1024) {
+			//TODO get info from sfdp
+			flash_info->use_4byte_addr = 1;
+			flash_info->erase_cmd = SPI_FLASH_CMD_4SE;
+			flash_info->read_cmd = SPI_FLASH_CMD_4READ;
+			flash_info->page_program_cmd = SPI_FLASH_CMD_4PP;
+		}
+	}
+	else {
+		flash_info->flash_id = FLASH_M25P64;
+		flash_info->size = CFG_DEFAULT_FLASH_SIZE; /* bytes */
+		flash_info->sector_size = CFG_DEFAULT_FLASH_SECTOR_SIZE;
+		flash_info->sector_count = flash_info->size / CFG_DEFAULT_FLASH_SECTOR_SIZE;
+		flash_info->erase_cmd = ATH_SPI_CMD_SECTOR_ERASE;
+	}
 
 	for (i = 0; i < flash_info->sector_count; i++) {
 		flash_info->start[i] = CFG_FLASH_BASE +
-					(i * CFG_FLASH_SECTOR_SIZE);
+			(i * flash_info->sector_size);
 		flash_info->protect[i] = 0;
 	}
 
-	debug ("flash size %dMB, sector count = %d\n",
-			FLASH_SIZE, flash_info->sector_count);
+	debug ("flash size %dB, sector count = %d\n",
+			flash_info->size, flash_info->sector_count);
 
 	return (flash_info->size);
 }
