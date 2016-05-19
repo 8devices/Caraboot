@@ -1,7 +1,7 @@
 /*
- * USB boot functions for Carambola2
+ * USB boot functions for Carambola2/Lima
  *
- * Copyright (C) 2014 Mantas Pucka <mantas@8devices.com>
+ * Copyright (C) 2014-2016 Mantas Pucka <mantas@8devices.com>
  *
  * SPDX-License-Identifier:GPL-2.0
  */
@@ -18,6 +18,8 @@
 #define MK_STR(x) XMK_STR(x)
 
 #ifdef CONFIG_USB_BOOT
+
+extern flash_info_t flash_info[];	/* info for FLASH chips */
 
 void usbboot_indicate_recovery(int type)
 {
@@ -59,12 +61,20 @@ int usbboot_recovery(char * boot_dev_part, char * boot_file_name)
 	int fat_read_ret;
 	char flash_cmd [128];
 	char image_size[16];
+	unsigned long max_file_size;
 
+#ifdef CFG_USB_RECOVERY_USE_SF
+	max_file_size = flash_info[0].size - CFG_USB_RECOVERY_FW_START_IN_FLASH;
+	if (max_file_size > CFG_MAX_USB_BOOT_FILE_SIZE)
+		max_file_size = CFG_MAX_USB_BOOT_FILE_SIZE;
+#else
+	max_file_size = CFG_MAX_USB_RECOVERY_FILE_SIZE;
+#endif
 	fs_set_blk_dev ("usb", boot_dev_part, FS_TYPE_FAT);
 	fat_read_ret = do_fat_read_at(boot_file_name,
 					0,
 					CFG_USB_BOOT_LOAD_ADDR,
-					CFG_MAX_USB_RECOVERY_FILE_SIZE,
+					max_file_size,
 					0);
 
 	if (fat_read_ret > 0){
@@ -74,15 +84,25 @@ int usbboot_recovery(char * boot_dev_part, char * boot_file_name)
 			boot_file_name , fat_read_ret, boot_dev_part);
 		sprintf(image_size,"%x",fat_read_ret);
 
-		// Example command
-		//erase 0x9f050000 +3FA000; cp.b 0x80060000 0x9f050000 3FA000
 		char* load_addr = MK_STR(CFG_USB_BOOT_LOAD_ADDR);
-		sprintf(flash_cmd,"erase %s +%s; cp.b %s %s %s",
-			  CFG_USB_RECOVERY_FW_START_IN_FLASH,
+		char* start_of_fw = MK_STR(CFG_USB_RECOVERY_FW_START_IN_FLASH);
+#ifdef CFG_USB_RECOVERY_USE_SF
+		//sf erase 0xc0000 +3FA000; sf write 0x80060000 0xc0000 3FA000
+		sprintf(flash_cmd,"sf erase %s +%s; sf write %s %s %s",
+			  start_of_fw,
 			  image_size,
 			  load_addr,
-			  CFG_USB_RECOVERY_FW_START_IN_FLASH,
+			  start_of_fw,
 			  image_size);
+#else
+		//erase 0x9f050000 +3FA000; cp.b 0x80060000 0x9f050000 3FA000
+		sprintf(flash_cmd,"erase %s +%s; cp.b %s %s %s",
+			  start_of_fw,
+			  image_size,
+			  load_addr,
+			  start_of_fw,
+			  image_size);
+#endif
 		printf ("\nFlashing image\n%s\n", flash_cmd);
 		setenv("recovery_flash_cmd", flash_cmd);
 		int  argc_flash=2;
