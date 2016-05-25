@@ -142,9 +142,11 @@ static int ath_gmac_recv(struct eth_device *dev)
 		}
 
 		length = f->pkt_size;
-
-		NetReceive(NetRxPackets[mac->next_rx] , length - 4);
-		flush_cache((u32) NetRxPackets[mac->next_rx] , PKTSIZE_ALIGN);
+		if (length > 4 && length <= 1536) {
+			invalidate_dcache_range((ulong)(NetRxPackets[mac->next_rx]),
+						(ulong)(NetRxPackets[mac->next_rx]) + length);
+			NetReceive(NetRxPackets[mac->next_rx] , length - 4);
+		}
 
 		ath_gmac_reg_wr(mac,0x194,1);
 		ath_gmac_rx_give_to_dma(f);
@@ -360,6 +362,8 @@ static int ath_gmac_alloc_fifo(int ndesc, ath_gmac_desc_t ** fifo)
 	p = (uchar *) (((u32) p + CFG_CACHELINE_SIZE - 1) &
 			~(CFG_CACHELINE_SIZE - 1));
 	p = UNCACHED_SDRAM(p);
+
+	memset((void*)p, 0, size);
 
 	for (i = 0; i < ndesc; i++)
 		fifo[i] = (ath_gmac_desc_t *) p + i;
