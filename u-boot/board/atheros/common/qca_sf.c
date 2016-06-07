@@ -16,12 +16,12 @@
 /* Use CS0 by default */
 static u32 qca_sf_cs_mask = QCA_SPI_SHIFT_CNT_CHNL_CS0_MASK;
 
-static inline void qca_sf_spi_en(void)
+inline void qca_sf_spi_en(void)
 {
 	qca_soc_reg_write(QCA_SPI_FUNC_SEL_REG, 1);
 }
 
-static inline void qca_sf_spi_di(void)
+inline void qca_sf_spi_di(void)
 {
 	qca_soc_reg_write(QCA_SPI_SHIFT_CNT_REG, 0);
 	qca_soc_reg_write(QCA_SPI_FUNC_SEL_REG, 0);
@@ -79,6 +79,54 @@ static inline void qca_sf_write_di(void)
 	qca_sf_shift_out(SPI_FLASH_CMD_WRDI, 8, 1);
 }
 
+/* Poll status register and wait till busy bit is cleared */
+static void qca_sf_busy_wait(void)
+{
+	volatile u32 data_in;
+
+	/* Poll status register continuously (keep CS low during whole loop) */
+	qca_sf_shift_out(SPI_FLASH_CMD_RDSR, 8, 0);
+
+	do {
+		qca_sf_shift_out(0x0, 8, 0);
+		data_in = qca_sf_shift_in() & 0x1;
+	} while (data_in);
+
+	/* Disable CS chip */
+	qca_sf_shift_out(0x0, 0, 1);
+}
+
+/* Returns flash configuration register that is accessible with command 'cmd' */
+u8 qca_sf_read_reg(u8 cmd) 
+{
+	qca_sf_shift_out(cmd << 8, 16, 1);
+	return qca_sf_shift_in();
+}
+
+/* Writes 'data' to flash configuration register that has wirite command 'cmd' */
+void qca_sf_write_reg(u8 cmd, u8 data) 
+{
+	qca_sf_write_en();
+	qca_sf_shift_out(cmd, 8, 0);
+	qca_sf_shift_out(data, 8, 1);
+	qca_sf_busy_wait();
+	qca_sf_write_di();
+}
+
+static void qca_sf_set_addressing(flash_info_t *info, u32 enable)
+{
+	if (info->need_4byte_enable_op) {
+		if (enable)
+			qca_sf_shift_out(SPI_FLASH_CMD_EN4B, 8, 1);
+		else {
+			qca_sf_shift_out(SPI_FLASH_CMD_EX4B, 8, 1);
+			/* Set extended address reg to 0 to access
+			 * lower 16MB when using HW mapping */
+			qca_sf_write_reg(SPI_FLASH_CMD_WEAR, 0x0);
+		}
+	}
+}
+
 static void qca_sf_bank_to_cs_mask(u32 bank)
 {
 	switch (bank) {
@@ -110,23 +158,6 @@ void qca_sf_prepare_cmd(u8 cmd, u32 addr, u32 is_4byte, u32 buf[2])
 	}
 }
 
-/* Poll status register and wait till busy bit is cleared */
-static void qca_sf_busy_wait(void)
-{
-	volatile u32 data_in;
-
-	/* Poll status register continuously (keep CS low during whole loop) */
-	qca_sf_shift_out(SPI_FLASH_CMD_RDSR, 8, 0);
-
-	do {
-		qca_sf_shift_out(0x0, 8, 0);
-		data_in = qca_sf_shift_in() & 0x1;
-	} while (data_in);
-
-	/* Disable CS chip */
-	qca_sf_shift_out(0x0, 0, 1);
-}
-
 /* Bulk (whole) FLASH erase */
 void qca_sf_bulk_erase(u32 bank)
 {
@@ -142,7 +173,6 @@ void qca_sf_bulk_erase(u32 bank)
 u32 qca_sf_sect_erase(flash_info_t *info, u32 address)
 {
 	u32 data_out[2];
-	int use_4byte_addr = 0;
 	qca_sf_bank_to_cs_mask(info->bank);
 
 	if (address >= 0x1000000 && info->use_4byte_addr == 0) {
@@ -152,6 +182,7 @@ u32 qca_sf_sect_erase(flash_info_t *info, u32 address)
 	qca_sf_prepare_cmd(info->erase_cmd, address, info->use_4byte_addr, data_out);
 
 	qca_sf_spi_en();
+	qca_sf_set_addressing(info, 1);
 	qca_sf_write_en();
 	if (info->use_4byte_addr) {
 		qca_sf_shift_out(data_out[0], 32, 0);
@@ -162,6 +193,7 @@ u32 qca_sf_sect_erase(flash_info_t *info, u32 address)
 	}
 
 	qca_sf_busy_wait();
+	qca_sf_set_addressing(info, 0);
 	qca_sf_spi_di();
 
 	return 0;
@@ -183,6 +215,7 @@ void qca_sf_write_page(flash_info_t *info, u32 bank, u32 address, u32 length, u8
 	qca_sf_prepare_cmd(info->page_program_cmd, address, info->use_4byte_addr, data_out);
 
 	qca_sf_spi_en();
+	qca_sf_set_addressing(info, 1);
 	qca_sf_write_en();
 
 	qca_sf_shift_out(data_out[0], 32, 0);
@@ -199,6 +232,7 @@ void qca_sf_write_page(flash_info_t *info, u32 bank, u32 address, u32 length, u8
 	qca_sf_shift_out(*(data + i), 8, 1);
 
 	qca_sf_busy_wait();
+	qca_sf_set_addressing(info, 0);
 	qca_sf_spi_di();
 }
 
@@ -215,6 +249,7 @@ int qca_sf_read(flash_info_t *info, u32 bank, u32 address, u32 length, u8 *data)
 	qca_sf_prepare_cmd(info->read_cmd, address, info->use_4byte_addr, data_out);
 
 	qca_sf_spi_en();
+	qca_sf_set_addressing(info, 1);
 	qca_sf_shift_out(data_out[0], 32, 0);
 	if (info->use_4byte_addr){
 		qca_sf_shift_out(data_out[1], 8, 0);
@@ -230,6 +265,7 @@ int qca_sf_read(flash_info_t *info, u32 bank, u32 address, u32 length, u8 *data)
 	qca_sf_shift_out(0, 8, 1);
 	*(data + i) = qca_sf_shift_in();
 
+	qca_sf_set_addressing(info, 0);
 	qca_sf_spi_di();
 
 	return 0;

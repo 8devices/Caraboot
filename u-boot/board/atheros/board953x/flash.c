@@ -20,6 +20,31 @@
 #include <asm/types.h>
 #include <flash.h>
 
+#define JEDEC_MFR(info)	(((info)->flash_id >> 16) & 0xff )
+#define MFR_ID_SPANSION 0x01
+#define MFR_ID_WINBOND 0xef
+
+
+void flash_enable_reset(void)
+{
+	u8 reg;
+	qca_sf_spi_en();
+	reg = qca_sf_read_reg(SPI_FLASH_CMD_RSR3);
+	// Enable RESET signal on HOLD/RESET pin
+	if ((reg & (1 << FLASH_SR3_HOLD_RESET_OFS)) == 0) {
+		reg = reg | (1 << FLASH_SR3_HOLD_RESET_OFS); 
+		qca_sf_write_reg(SPI_FLASH_CMD_WSR3, reg);
+	}
+
+	reg = qca_sf_read_reg(SPI_FLASH_CMD_RSR2);
+	// Disable Quad mode to allow RESET signal
+	if ((reg & (1 << FLASH_SR2_QE_OFS)) != 0) {
+		reg = reg & ~(1 << FLASH_SR2_QE_OFS); 
+		qca_sf_write_reg(SPI_FLASH_CMD_WSR2, reg);
+	}
+	qca_sf_spi_di();
+}
+
 /*
  * sets up flash_info and returns size of FLASH (bytes)
  */
@@ -32,22 +57,38 @@ flash_get_geom (flash_info_t *flash_info)
 	u8 erase_cmd;
 
 	ret = qca_sf_sfdp_info(0, &flash_size, &sect_size, &erase_cmd);
+	u32 flash_id = qca_sf_jedec_id(0);
+
 	flash_info->use_4byte_addr = 0;
+	flash_info->need_4byte_enable_op = 0;
 	flash_info->read_cmd = SPI_FLASH_CMD_READ;
 	flash_info->page_program_cmd = SPI_FLASH_CMD_PP;
 
 	if (ret == 0) {
-		flash_info->flash_id = FLASH_M25P64;
+		flash_info->flash_id = flash_id;
 		flash_info->size = flash_size; /* bytes */
 		flash_info->sector_size = sect_size;
 		flash_info->sector_count = flash_size / sect_size;
 		flash_info->erase_cmd = erase_cmd;
 		if (flash_info->size > 16*1024*1024) {
-			//TODO get info from sfdp
+			debug("flash: >16MB detected\n");
 			flash_info->use_4byte_addr = 1;
-			flash_info->erase_cmd = SPI_FLASH_CMD_4SE;
-			flash_info->read_cmd = SPI_FLASH_CMD_4READ;
-			flash_info->page_program_cmd = SPI_FLASH_CMD_4PP;
+			if (JEDEC_MFR(flash_info) == MFR_ID_SPANSION) {
+				debug("flash_mfr:Spansion\n");
+				flash_info->need_4byte_enable_op = 0;
+				flash_info->erase_cmd = SPI_FLASH_CMD_4SE;
+				flash_info->read_cmd = SPI_FLASH_CMD_4READ;
+				flash_info->page_program_cmd = SPI_FLASH_CMD_4PP;
+			}
+			else if (JEDEC_MFR(flash_info) == MFR_ID_WINBOND) {
+				debug("flash_mfr:Winbond\n");
+				flash_info->need_4byte_enable_op = 1;
+				flash_enable_reset();
+			}
+			else {
+				debug("flash_mfr:unknonwn\n");
+				flash_info->need_4byte_enable_op = 1;
+			}
 		}
 	}
 	else {

@@ -39,6 +39,7 @@ typedef struct {
 	u32 bank;
 	u16 page_size;
 	u8  use_4byte_addr;
+	u8  need_4byte_enable_op;
 	u8  erase_cmd;
 	u8  read_cmd;
 	u8  page_program_cmd;
@@ -463,6 +464,9 @@ extern void flash_read_factory_serial(flash_info_t * info, void * buffer, int of
 #define SPI_FLASH_CMD_4PP		0x12
 #define SPI_FLASH_CMD_4SE		0xDC
 
+#define SPI_FLASH_CMD_EN4B		0xB7
+#define SPI_FLASH_CMD_EX4B		0xE9
+
 
 /* SPI FLASH erase related commands */
 #define SPI_FLASH_CMD_ES_4KB	0x20
@@ -477,6 +481,18 @@ extern void flash_read_factory_serial(flash_info_t * info, void * buffer, int of
 /* SFDP related defines */
 #define SPI_FLASH_SFDP_SIGN		0x50444653
 
+/* Register access commands */
+#define SPI_FLASH_CMD_RSR1		0x5
+#define SPI_FLASH_CMD_WSR1		0x1
+#define SPI_FLASH_CMD_RSR2		0x35
+#define SPI_FLASH_CMD_WSR2		0x31
+#define SPI_FLASH_CMD_RSR3		0x15
+#define SPI_FLASH_CMD_WSR3		0x11
+#define SPI_FLASH_CMD_REAR		0xC8
+#define SPI_FLASH_CMD_WEAR		0xC5
+
+#define FLASH_SR3_HOLD_RESET_OFS 	7
+#define FLASH_SR2_QE_OFS 		1
 
 #endif /* !CFG_NO_FLASH */
 
