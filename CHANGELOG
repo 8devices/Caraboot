@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+2016-08-19 - v2.5
+	* New SPI flash driver for Lima with >16MB chips
+	* Option to build RAM loadable bootloader
+	* Ported USB recovery to Lima
+	* ETH driver improvements for Lima
+
 2016-02-11 - v2.4
 	* Add QCA9531 support
 	* Add 8devices Lima board support
