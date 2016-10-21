@@ -1709,8 +1709,9 @@ NetSetEther(volatile uchar * xet, uchar * addr, uint prot)
 	}
 }
 
+
 void
-NetSetIP(volatile uchar * xip, IPaddr_t dest, int dport, int sport, int len)
+NetSetSrcDstIP(volatile uchar * xip, IPaddr_t src, IPaddr_t dest, int dport, int sport, int len)
 {
 	volatile IP_t *ip = (IP_t *)xip;
 
@@ -1734,13 +1735,19 @@ NetSetIP(volatile uchar * xip, IPaddr_t dest, int dport, int sport, int len)
 	ip->ip_ttl   = 255;
 	ip->ip_p     = 17;		/* UDP */
 	ip->ip_sum   = 0;
-	NetCopyIP((void*)&ip->ip_src, &NetOurIP); /* already in network byte order */
+	NetCopyIP((void*)&ip->ip_src, &src); /* already in network byte order */
 	NetCopyIP((void*)&ip->ip_dst, &dest);	   /* - "" - */
 	ip->udp_src  = htons(sport);
 	ip->udp_dst  = htons(dport);
 	ip->udp_len  = htons(8 + len);
 	ip->udp_xsum = 0;
 	ip->ip_sum   = ~NetCksum((uchar *)ip, IP_HDR_SIZE_NO_UDP / 2);
+}
+
+void
+NetSetIP(volatile uchar * xip, IPaddr_t dest, int dport, int sport, int len)
+{
+	NetSetSrcDstIP(xip, NetOurIP, dest, dport, sport, len);
 }
 
 void copy_filename (char *dst, char *src, int size)
