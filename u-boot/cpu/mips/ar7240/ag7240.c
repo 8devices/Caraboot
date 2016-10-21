@@ -482,10 +482,9 @@ static void ag7240_get_ethaddr(struct eth_device *dev)
         printf("%s: unknown ethernet device %s\n", __func__, dev->name);
         return;
     }
-    /* Use fixed address if the above address is invalid */
-    if (mac[0] != 0x00 || (mac[0] == 0xff && mac[5] == 0xff) ||
-	(mac[1] == 0x00 && mac[2] == 0x00 &&
-	mac[3] == 0x00 && mac[4] == 0x00)) {
+    /* Only allow globally unique, unicast addresses */
+    if (CHECK_BIT((mac[0] & 0xFF), 0) != 0 ||
+            CHECK_BIT((mac[0] & 0xFF), 1) != 0) {
 #else
     if (1) {
 #endif 
@@ -497,7 +496,7 @@ static void ag7240_get_ethaddr(struct eth_device *dev)
         mac[5] = 0xad;
         debug("No valid address in Flash. Using fixed address\n");
     } else {
-        debug("Fetching MAC Address from 0x%p\n", __func__, eeprom);
+        debug("Fetching MAC Address from 0x%p\n", eeprom);
     }
 }
 
