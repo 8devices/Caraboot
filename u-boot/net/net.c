@@ -94,9 +94,9 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define ARP_TIMEOUT		5		/* Seconds before trying ARP again */
+#define ARP_TIMEOUT		2		/* Seconds before trying ARP again */
 #ifndef	CONFIG_NET_RETRY_COUNT
-# define ARP_TIMEOUT_COUNT	5		/* # of timeouts before giving up  */
+# define ARP_TIMEOUT_COUNT	2		/* # of timeouts before giving up  */
 #else
 # define ARP_TIMEOUT_COUNT  (CONFIG_NET_RETRY_COUNT)
 #endif
