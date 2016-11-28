@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+2016-11-28 - v2.6
+	* Fix MAC address validation
+	* Speed-up network init
+
 2016-08-19 - v2.5
 	* New SPI flash driver for Lima with >16MB chips
 	* Option to build RAM loadable bootloader
