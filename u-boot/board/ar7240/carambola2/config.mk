@@ -7,4 +7,6 @@ TEXT_BASE = 0x9f000000
 endif
 
 # SDRAM version
-#TEXT_BASE = 0x80000000
+ifeq ($(RAM_BOOT),1)
+TEXT_BASE = 0x80100000
+endif

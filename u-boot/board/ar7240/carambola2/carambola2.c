@@ -175,6 +175,7 @@ ar7240_mem_config(void)
 
     ar7240_gpio_config();	// init GPIO
 
+#if !defined(CONFIG_SKIP_LOWLEVEL_INIT)
     ar7240_ddr_initial_config(CFG_DDR_REFRESH_VAL);
 
 /* Default tap values for starting the tap_init*/
@@ -188,6 +189,7 @@ ar7240_mem_config(void)
     tap_val2 = ar7240_reg_rd(0xb8000020);
     debug("#### TAP VALUE 1 = %x, 2 = %x\n",tap_val1, tap_val2);
 #endif
+#endif /* CONFIG_SKIP_LOWLEVEL_INIT */
 
     ar7240_usb_initial_config();
     ar7240_usb_otp_config();

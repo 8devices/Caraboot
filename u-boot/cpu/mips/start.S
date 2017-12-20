@@ -392,13 +392,13 @@ normal_path:
 	jalr    t9
 	nop
 	nop
-#endif
 
 #if defined(CONFIG_MACH_HORNET)
 	la      t9, hornet_ddr_init
 	jalr    t9
 	nop
 	nop
+#endif
 #endif
 
 	la	t0, rel_start
