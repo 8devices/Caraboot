@@ -23,6 +23,67 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define MAX_TX_FIFO	16
+#define SER_BUF_LEN	64 /* Must be a power of 2 */
+int tx_fifo_state = 0;
+
+#define LSR_DR		(1<<0)
+#define LSR_OE		(1<<1)
+#define LSR_PE		(1<<2)
+#define LSR_FE		(1<<3)
+#define LSR_BI		(1<<4)
+#define LSR_THRE	(1<<5)
+#define LSR_TEMT	(1<<6)
+#define LSR_FERR	(1<<7)
+
+struct ser_ring {
+    unsigned char       data[SER_BUF_LEN];
+    unsigned int        read;
+    unsigned int        write;
+    unsigned int        size;
+    unsigned int        mask;
+};
+static struct ser_ring sring;
+
+#define ring_empty(ring)        ((ring)->write==(ring)->read)
+#define ring_full(ring)         ((((ring)->write+1)&(ring)->mask)==(ring)->read)
+#define ring_len(ring)          (((ring)->write-(ring)->read+(ring)->size)&(ring)->mask)
+
+void ring_init(struct ser_ring *ring)
+{
+	ring->write=0;
+	ring->read=0;
+	ring->size=SER_BUF_LEN;
+	ring->mask=SER_BUF_LEN-1;
+}
+
+void serial_buf_init(void)
+{
+	ring_init(&sring);
+}
+
+int ring_put(struct ser_ring *ring, unsigned char data)
+{
+	if(!ring_full(ring)){
+		ring->data[ring->write] = data;
+		ring->write = (ring->write+1) & ring->mask;
+		return 0;
+	}
+	else
+		return 1;
+}
+
+int ring_get(struct ser_ring *ring, unsigned char *data)
+{
+	if(!ring_empty(ring)) {
+		*data = ring->data[ring->read];
+		ring->read = (ring->read+1) & ring->mask;
+		return 0;
+	}
+	else
+		return 1;
+}
+
 /*
  * Divide positive or negative dividend by positive divisor and round
  * to closest integer. Result is undefined for negative divisors and
@@ -52,6 +113,7 @@ int serial_init(void)
 
 	ath_uart_wr(OFS_DATA_FORMAT, 0x3);
 	ath_uart_wr(OFS_INTR_ENABLE, 0);
+	ath_uart_wr(OFS_INTR_ID, 0x07); //enable FIFO
 
 	return 0;
 }
@@ -183,24 +245,67 @@ void uart_gpio_init_qca956x(void)
 #endif
 }
 
+int lsr_read(void)
+{
+	return ath_uart_rd(OFS_LINE_STATUS);
+}
+
 int serial_tstc (void)
 {
-	return(ath_uart_rd(OFS_LINE_STATUS) & 0x1);
+	if(gd->flags & GD_FLG_RELOC) {
+		if (!ring_empty(&sring)) {
+			return 1;
+		}
+	}
+
+	return (lsr_read() & LSR_DR);
 }
 
 int serial_getc(void)
 {
-	while(!serial_tstc());
+	unsigned char buf_c;
 
+	if (gd->flags & GD_FLG_RELOC) {
+		while (lsr_read() & LSR_DR) {
+			if (!ring_full(&sring))
+				ring_put(&sring, (ath_uart_rd(OFS_RCV_BUFFER) & 0xff));
+			else
+				break;
+		}
+		if (ring_get(&sring, &buf_c) == 0)
+		{
+			return buf_c;
+		}
+	}
+
+	while (!(lsr_read() & LSR_DR));
 	return (ath_uart_rd(OFS_RCV_BUFFER) & 0xff);
 }
 
-
 void serial_putc(const char byte)
 {
+	int lsr;
+
 	if (byte == '\n') serial_putc ('\r');
 
-	while (((ath_uart_rd(OFS_LINE_STATUS)) & 0x20) == 0x0);
+	/* After relocation (normal mode) */
+	if (gd->flags & GD_FLG_RELOC) {
+		do {
+			lsr = lsr_read();
+			if ((lsr & LSR_DR) && !ring_full(&sring)){
+				ring_put(&sring, (ath_uart_rd(OFS_RCV_BUFFER) & 0xff));
+			}
+		} while (((lsr & LSR_THRE) == 0) && (tx_fifo_state >= MAX_TX_FIFO));
+
+		if ((lsr & LSR_THRE) != 0) {
+			tx_fifo_state = 0;
+		}
+		tx_fifo_state++;
+
+	/* Before relocation */
+	} else {
+		while ((lsr_read() & LSR_THRE) == 0);
+	}
 
 	ath_uart_wr(OFS_SEND_BUFFER, byte);
 }
