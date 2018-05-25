@@ -55,8 +55,9 @@ flash_get_geom (flash_info_t *flash_info)
 	int ret;
 	u32 flash_size, sect_size;
 	u8 erase_cmd;
+	int full_4b_support = 0;
 
-	ret = qca_sf_sfdp_info(0, &flash_size, &sect_size, &erase_cmd);
+	ret = qca_sf_sfdp_info(0, &flash_size, &sect_size, &erase_cmd, &full_4b_support);
 	u32 flash_id = qca_sf_jedec_id(0);
 
 	flash_info->use_4byte_addr = 0;
@@ -73,8 +74,8 @@ flash_get_geom (flash_info_t *flash_info)
 		if (flash_info->size > 16*1024*1024) {
 			debug("flash: >16MB detected\n");
 			flash_info->use_4byte_addr = 1;
-			if (JEDEC_MFR(flash_info) == MFR_ID_SPANSION) {
-				debug("flash_mfr:Spansion\n");
+			if (JEDEC_MFR(flash_info) == MFR_ID_SPANSION || full_4b_support == 1) {
+				debug("flash_mfr:Spansion or 4byte compliant\n");
 				flash_info->need_4byte_enable_op = 0;
 				flash_info->erase_cmd = SPI_FLASH_CMD_4SE;
 				flash_info->read_cmd = SPI_FLASH_CMD_4READ;

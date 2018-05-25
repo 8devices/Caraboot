@@ -280,12 +280,14 @@ int qca_sf_read(flash_info_t *info, u32 bank, u32 address, u32 length, u8 *data)
 u32 qca_sf_sfdp_info(u32 bank,
 					 u32 *flash_size,
 					 u32 *sect_size,
-					 u8  *erase_cmd)
+					 u8  *erase_cmd,
+					 int *full_4b_support)
 {
 	u8 buffer[12];
 	u8 ss = 0, ec = 0;
 	u32 data_in, i;
 	u32 ptp_length, ptp_offset;
+	u8 full_4b = 0;
 
 	qca_sf_bank_to_cs_mask(bank);
 
@@ -352,6 +354,16 @@ u32 qca_sf_sfdp_info(u32 bank,
 		}
 	}
 
+	/* 4-byte addressing mode support */
+	if (ptp_length >= 16) {
+		data_in = qca_sf_sfdp_bfpt_dword(ptp_offset, 16);
+		if (data_in & (1<<29)) {
+			full_4b = 1;
+		}
+	}
+
+	qca_sf_spi_di();
+
 	if (ss == 0)
 		return 1;
 
@@ -361,7 +373,8 @@ u32 qca_sf_sfdp_info(u32 bank,
 	if (erase_cmd != NULL)
 		*erase_cmd = ec;
 
-	qca_sf_spi_di();
+	if (full_4b_support != NULL)
+		*full_4b_support = full_4b;
 
 	return 0;
 }
@@ -424,3 +437,4 @@ int qca_sf_write_buf(flash_info_t *info, u32 bank, u32 address, u32 length, u8 *
 
 	return 0;
 }
+
