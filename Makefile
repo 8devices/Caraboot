@@ -24,7 +24,7 @@ export FLASH_SIZE=16
 export NEW_DDR_TAP_CAL=1
 export CONFIG_HORNET_XTAL=40
 export CONFIG_HORNET_1_1_WAR=1
-export CARABOOT_RELEASE=v2.7
+export CARABOOT_RELEASE=v2.8-dev
 ifeq ($(BOARD_TYPE),lima)
 	export ETH_CONFIG=_s27
 endif
