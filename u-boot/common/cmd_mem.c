@@ -730,6 +730,7 @@ int do_mem_mtest (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 #else
 	ulong	incr;
 	ulong	pattern;
+	ulong	count;
 	int     rcode = 0;
 #endif
 
@@ -751,6 +752,11 @@ int do_mem_mtest (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		pattern = 0;
 	}
 
+	if (argc > 4) {
+		count = (ulong)simple_strtoul(argv[4], NULL, 16)+1;
+	} else {
+		count = 0;
+	}
 #if defined(CFG_ALT_MEMTEST)
 	printf ("Testing %08x ... %08x:\n", (uint)start, (uint)end);
 	PRINTF("%s:%d: start 0x%p end 0x%p\n",
@@ -956,6 +962,12 @@ int do_mem_mtest (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		if (ctrlc()) {
 			putc ('\n');
 			return 1;
+		}
+		if (count == 1) {
+			return 0;
+		}
+		if (count>1){
+			count--;
 		}
 
 		printf ("\rPattern %08lX  Writing..."
@@ -1285,7 +1297,7 @@ U_BOOT_CMD(
 );
 
 U_BOOT_CMD(
-	mtest,    4,    1,     do_mem_mtest,
+	mtest,    5,    1,     do_mem_mtest,
 	"mtest   - simple RAM test\n",
 	"[start [end [pattern]]]\n"
 	"    - simple RAM read/write test\n"
