@@ -24,6 +24,9 @@ inline void qca_sf_spi_en(void)
 inline void qca_sf_spi_di(void)
 {
 	qca_soc_reg_write(QCA_SPI_SHIFT_CNT_REG, 0);
+	/* Second write: single write is not enough to flush register */
+	qca_soc_reg_write(QCA_SPI_SHIFT_CNT_REG, 0);
+
 	qca_soc_reg_write(QCA_SPI_FUNC_SEL_REG, 0);
 }
 
