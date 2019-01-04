@@ -190,9 +190,9 @@
 
 #define CFG_USB_RECOVERY_USE_SF			1   /* use SPI flash (sf) commands */
 #define CFG_USB_BOOT_MAX_PARTITIONS_SCAN 	16
-#define CFG_USB_BOOT_LOAD_ADDR 			0x84000000   /* starts at upper half of RAM */
-#define CFG_MAX_USB_BOOT_FILE_SIZE 		60*1024*1024 /* 60MB */
-#define CFG_MAX_USB_RECOVERY_FILE_SIZE 		0xF40000 /* 15.25MB */
+#define CFG_USB_BOOT_LOAD_ADDR 			0x82000000   /* starts at upper half of RAM */
+#define CFG_MAX_USB_BOOT_FILE_SIZE		30*1024*1024 /* 30MB */
+#define CFG_MAX_USB_RECOVERY_FILE_SIZE	30*1024*1024 /* 30MB */
 #define CFG_USB_BOOT_FILENAME 			"8dev_uimage.bin"
 #define CFG_USB_RECOVERY_FILENAME 		"8dev_recovery.bin"
 #define CFG_USB_RECOVERY_FW_START_IN_FLASH 	0xc0000
