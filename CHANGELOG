@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+2019-01-15 - v2.8
+	* Fix serial character skipping on Lima
+	* Fix USB boot image loading on Lima
+	* Add iteration count parameter to mtest command
+
 2018-05-25 - v2.7
 	* Fix default netretry value
 	* Add support for W25Q256JV flash
