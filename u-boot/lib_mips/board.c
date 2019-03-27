@@ -413,7 +413,9 @@ void board_init_r (gd_t *id, ulong dest_addr)
 #ifdef CONFIG_GPIOLIB
 	gpiolib_customized_init();
 #endif
+#ifdef CONFIG_ATHEROS
 	serial_buf_init();
+#endif
 
 	/* board MAC address */
 	s = getenv ("ethaddr");
