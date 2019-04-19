@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+2019-04-19 - v2.9
+	* Fix environment saving on Lima
+	* Fix build for Carambola2
+
 2019-01-15 - v2.8
 	* Fix serial character skipping on Lima
 	* Fix USB boot image loading on Lima
