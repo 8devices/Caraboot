@@ -13,6 +13,7 @@ Download:
 ```
 cd your_work_dir
 git clone git://git.buildroot.net/buildroot
+git checkout 2016.02
 ```
   
 Configure:
@@ -26,7 +27,7 @@ Save and exit.
 
 Build:
 ```
-make
+make toolchain
 ```
 
 2) Build Caraboot image
