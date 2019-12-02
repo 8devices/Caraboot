@@ -848,10 +848,13 @@ static void DhcpSendRequestPkt(Bootp_t *bp_offer)
 	bp->bp_hlen = HWL_ETHER;
 	bp->bp_hops = 0;
 	bp->bp_secs = htons(get_timer(0) / CFG_HZ);
-	NetCopyIP(&bp->bp_ciaddr, &bp_offer->bp_ciaddr); /* both in network byte order */
-	NetCopyIP(&bp->bp_yiaddr, &bp_offer->bp_yiaddr);
-	NetCopyIP(&bp->bp_siaddr, &bp_offer->bp_siaddr);
-	NetCopyIP(&bp->bp_giaddr, &bp_offer->bp_giaddr);
+	bp->bp_flags = htons(0x8000);	/* default to broadcast, instead of unicast. */
+
+	memset(&bp->bp_ciaddr, 0, sizeof(&bp->bp_ciaddr));
+	memset(&bp->bp_yiaddr, 0, sizeof(&bp->bp_yiaddr));
+	memset(&bp->bp_siaddr, 0, sizeof(&bp->bp_siaddr));
+	memset(&bp->bp_giaddr, 0, sizeof(&bp->bp_giaddr));
+
 	memcpy (bp->bp_chaddr, NetOurEther, 6);
 
 	/*
@@ -863,12 +866,12 @@ static void DhcpSendRequestPkt(Bootp_t *bp_offer)
 	/*
 	 * Copy options from OFFER packet if present
 	 */
-	NetCopyIP(&OfferedIP, &bp->bp_yiaddr);
+	NetCopyIP(&OfferedIP, &bp_offer->bp_yiaddr);
 	extlen = DhcpExtended((u8 *)bp->bp_vend, DHCP_REQUEST, NetDHCPServerIP, OfferedIP);
 
 	pktlen = BOOTP_SIZE - sizeof(bp->bp_vend) + extlen;
 	iplen = BOOTP_HDR_SIZE - sizeof(bp->bp_vend) + extlen;
-	NetSetIP(iphdr, 0xFFFFFFFFL, PORT_BOOTPS, PORT_BOOTPC, iplen);
+	NetSetSrcDstIP(iphdr, 0x0L, 0xFFFFFFFFL, PORT_BOOTPS, PORT_BOOTPC, iplen);
 
 	debug ("Transmitting DHCPREQUEST packet: len = %d\n", pktlen);
 	NetSendPacket(NetTxPacket, pktlen);
