@@ -41,6 +41,16 @@
 //===========================================
 hornet_ddr_init:
 
+    // DDR2 config
+    li t8, 0xA59;
+    set_mem(0xB800008c,t8);
+
+    li t8, 0x10;
+    set_mem(0xB8000010,t8);
+
+    li t8, 0x20;
+    set_mem(0xB8000010,t8);
+
     //--------DDR_Config_1--------   D.S 0xB8000000 %LONG 0x7fbc8cd0 
     li t8, CFG_DDR_CONFIG_VAL;
     set_mem(0xB8000000,t8);
@@ -64,7 +74,7 @@ hornet_ddr_init:
     set_mem( 0xB8000010, t8);
     
     //D.S 0xB800000C %LONG 0x2           ;      // Enable DLL, High drive strength from DDR
-    li t8, 0x2;
+    li t8, CFG_DDR2_EXT_MODE_VAL;
     set_mem( 0xB800000C , t8);
 
     //D.S 0xB8000010 %LONG 0x2           ;      // Write Extended Mode Word of DDR
