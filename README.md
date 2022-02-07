@@ -1,7 +1,7 @@
 Caraboot
 ========
 
-U-Boot for Carambola2 based boards
+U-Boot for Carambola2/Lima based boards
 
 
 Build
@@ -47,10 +47,14 @@ vi/nano/gedit Makefile
 
 Build:
 ```
-make
+make BOARD_TYPE=carambola2
+```
+or
+```
+make BOARD_TYPE=lima
 ```
 
-The bootloader binary will be saved to ```bin/carambola2_u-boot.bin``` file.
-You can now use this file to upgrade your bootloader on Carambola2 board (http://8devices.com/wiki/carambola:2:gettingstarted:bootloader-upgrade)
+The bootloader binary will be saved to ```bin/carambola2_u-boot.bin``` / ```bin/lima_u-boot.bin``` file.
+You can now use this file to upgrade your bootloader on Carambola2 (http://8devices.com/wiki/carambola2:uboot) or Lima (http://8devices.com/wiki/lima:uboot).
 
 
