@@ -36,7 +36,7 @@ typedef struct
 	uchar		bp_hops;	/* Hop count (gateway thing)		*/
 	ulong		bp_id;		/* Transaction ID			*/
 	ushort		bp_secs;	/* Seconds since boot			*/
-	ushort		bp_spare1;	/* Alignment				*/
+	ushort		bp_flags;	/* BOOTP/DHCP request flags		*/
 	IPaddr_t	bp_ciaddr;	/* Client IP address			*/
 	IPaddr_t	bp_yiaddr;	/* Your (client) IP address		*/
 	IPaddr_t	bp_siaddr;	/* Server IP address			*/

@@ -401,6 +401,7 @@ extern int	NetSetEther(volatile uchar *, uchar *, uint);
 
 /* Set IP header */
 extern void	NetSetIP(volatile uchar *, IPaddr_t, int, int, int);
+extern void	NetSetSrcDstIP(volatile uchar * xip, IPaddr_t src, IPaddr_t dest, int dport, int sport, int len);
 
 /* Checksum */
 extern int	NetCksumOk(uchar *, int);	/* Return true if cksum OK	*/
